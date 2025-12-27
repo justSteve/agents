@@ -1,0 +1,39 @@
+{
+  "name": "beads-workflows",
+  "description": "Beads issue tracking integration with session management, pattern enforcement, and workflow orchestration",
+  "version": "1.0.0",
+  "author": {
+    "name": "Steve",
+    "url": "https://github.com/justSteve"
+  },
+  "homepage": "https://github.com/justSteve/agents",
+  "repository": "https://github.com/justSteve/agents",
+  "license": "MIT",
+  "keywords": [
+    "beads",
+    "issue-tracker",
+    "workflow",
+    "task-management",
+    "ai-workflow"
+  ],
+  "category": "workflows",
+  "strict": false,
+  "commands": [
+    "./commands/beads-session-start.md",
+    "./commands/beads-session-end.md",
+    "./commands/beads-issue-create.md",
+    "./commands/beads-dependency-add.md"
+  ],
+  "agents": [
+    "./agents/beads-disciplinarian.md",
+    "./agents/beads-workflow-orchestrator.md",
+    "./agents/beads-issue-reviewer.md"
+  ],
+  "skills": [
+    "./skills/session-rituals",
+    "./skills/dependency-thinking",
+    "./skills/description-quality",
+    "./skills/single-issue-discipline",
+    "./skills/beads-cli-reference"
+  ]
+}
