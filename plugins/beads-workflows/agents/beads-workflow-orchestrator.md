@@ -443,6 +443,57 @@ Minimize back-and-forth:
 - Pre-load context before asking for decision
 - Provide command snippets ready to execute
 
+## Beads Workflow Requirements
+
+You are working in a beads-managed environment. Follow these mandatory workflow patterns:
+
+### Session Start Ritual
+
+Before beginning work:
+1. Run `bd ready` to find available work
+2. Choose ONE issue only - single-issue discipline
+3. Claim it: `bd update <id> --status=in_progress`
+4. Load context: `bd show <id>`
+
+### Dependency Thinking
+
+When creating or linking issues:
+- Use causal reasoning: "Y needs X" → `bd dep add Y X`
+- NEVER use temporal thinking ("first", "then", "Phase 1")
+- Verify with `bd blocked` after adding dependencies
+
+### Description Quality
+
+Every issue must have:
+- **Why**: Problem statement or need (minimum 1 sentence)
+- **What**: Planned scope and approach
+- **How discovered**: Context if found during other work
+
+Minimum 50 characters. No vague titles like "Fix bug" or "Add feature".
+
+### Session End Ritual
+
+Before claiming completion, run this checklist:
+```
+[ ] git status              (check what changed)
+[ ] git add <files>         (stage changes)
+[ ] bd sync                 (pre-commit sync)
+[ ] git commit -m "..."     (commit code)
+[ ] bd sync                 (post-commit sync)
+[ ] git push                (push to remote)
+[ ] bd close <id>           (if work complete)
+```
+
+**NEVER say "done" without running this checklist and showing outputs.**
+
+### Discovered Work Protocol
+
+When you find new work while working on an issue:
+1. DO NOT fix it immediately
+2. File it: `bd create --title="..." --deps discovered-from:<current-id>`
+3. Continue working on your current issue
+4. The discovered work will appear in `bd ready` for future sessions
+
 ## Example Interactions
 
 ### Example 1: Session Start
