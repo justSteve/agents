@@ -219,6 +219,293 @@ All quality criteria met:
 Proceeding to create issue...
 ```
 
+### Quality Validation Logic
+
+This section provides the implementation-level validation rules for automated quality checking.
+
+#### Title Validation
+
+**Length Check**:
+```
+Minimum: 10 characters
+Maximum: 100 characters
+Optimal: 30-70 characters
+
+if length < 10:
+    FAIL: "Title too short - provide more context"
+if length > 100:
+    WARNING: "Title may be too long - consider shortening"
+```
+
+**Vague Pattern Detection**:
+```python
+VAGUE_PATTERNS = [
+    r'^fix\s*(bug)?$',           # "fix" or "fix bug"
+    r'^update\s*(code)?$',       # "update" or "update code"
+    r'^refactor$',               # just "refactor"
+    r'^changes?$',               # "change" or "changes"
+    r'^misc$',                   # "misc"
+    r'^todo$',                   # "todo"
+    r'^wip$',                    # "wip"
+    r'^\w+$',                    # single word without context
+]
+
+for pattern in VAGUE_PATTERNS:
+    if regex.match(pattern, title, IGNORECASE):
+        WARNING: "Title may be too vague"
+        break
+```
+
+**Good Title Indicators**:
+```python
+GOOD_INDICATORS = [
+    r'\b(in|when|for|with|to|from)\b',  # prepositions add context
+    r'\b\w+\.\w+',                       # file references (foo.ts)
+    r'\b(add|remove|fix|update|implement|refactor)\s+\w+\s+\w+',  # verb + object + context
+]
+
+score = sum(1 for p in GOOD_INDICATORS if regex.search(p, title))
+if score >= 2:
+    PASS: "Title is descriptive"
+```
+
+**Corrective Prompt (Title)**:
+```
+⚠️  Title needs improvement
+
+Current: "<title>"
+Issues: <list of detected issues>
+
+A good title should:
+✓ Be specific about WHAT is changing
+✓ Include context (where, when, why)
+✓ Be findable via search
+
+Examples:
+• "Fix null pointer in UserService.getUser() when email is null"
+• "Add OAuth2 support to authentication flow"
+• "Refactor PaymentProcessor into separate validation and execution modules"
+
+Enter improved title (or press Enter to keep current):
+> _
+```
+
+#### Description Validation
+
+**Length Check by Type**:
+```
+Type        Minimum   Warning   Good
+----        -------   -------   ----
+chore       30        50        100+
+task        50        100       150+
+bug         100       150       200+
+feature     100       200       300+
+epic        200       300       500+
+
+if length < minimum:
+    FAIL: "Description too short for <type> (need {minimum}+ chars)"
+if length < warning:
+    WARNING: "Description could use more detail"
+```
+
+**Why/What/How Structure Detection**:
+```python
+def detect_structure(description):
+    indicators = {
+        'why': {
+            'headers': [r'##?\s*context', r'##?\s*background', r'##?\s*motivation'],
+            'keywords': [r'\bbecause\b', r'\bsince\b', r'\bdue to\b', r'\bneeded for\b',
+                        r'\brequired by\b', r'\bto support\b', r'\benables?\b'],
+            'weight': 'required'
+        },
+        'what': {
+            'headers': [r'##?\s*problem', r'##?\s*issue', r'##?\s*current', r'##?\s*desired'],
+            'keywords': [r'\bcurrently?\b', r'\bshould\b', r'\bexpected\b', r'\bactual\b',
+                        r'\bwant\b', r'\bneed\b', r'\bmust\b'],
+            'weight': 'required'
+        },
+        'how': {
+            'headers': [r'##?\s*acceptance', r'##?\s*criteria', r'##?\s*verification',
+                       r'##?\s*done when', r'##?\s*success'],
+            'keywords': [r'\[\s*\]', r'\bverify\b', r'\btest\b', r'\bconfirm\b',
+                        r'\bcomplete when\b', r'\bdone when\b'],
+            'weight': 'required'
+        },
+        'where': {
+            'headers': [r'##?\s*location', r'##?\s*files?', r'##?\s*technical'],
+            'keywords': [r'\b\w+\.(ts|js|py|go|rs|md)\b', r'\bsrc/', r'\blib/',
+                        r'\bcomponents?/', r'\bservices?/'],
+            'weight': 'recommended'
+        }
+    }
+
+    results = {}
+    for element, checks in indicators.items():
+        found_header = any(regex.search(h, description, IGNORECASE) for h in checks['headers'])
+        found_keyword = any(regex.search(k, description, IGNORECASE) for k in checks['keywords'])
+        results[element] = {
+            'present': found_header or found_keyword,
+            'weight': checks['weight'],
+            'method': 'header' if found_header else 'keyword' if found_keyword else None
+        }
+
+    return results
+```
+
+**Structure Validation**:
+```
+structure = detect_structure(description)
+
+missing_required = [e for e, r in structure.items() if r['weight'] == 'required' and not r['present']]
+missing_recommended = [e for e, r in structure.items() if r['weight'] == 'recommended' and not r['present']]
+
+if missing_required:
+    FAIL: "Missing required elements: " + ', '.join(missing_required)
+elif missing_recommended:
+    WARNING: "Consider adding: " + ', '.join(missing_recommended)
+else:
+    PASS: "Description has good structure"
+```
+
+**Corrective Prompt (Description - Missing Required)**:
+```
+⚠️  Description missing required elements
+
+Missing:
+• WHY: No context explaining why this matters
+• WHAT: No clear problem statement
+• HOW: No acceptance criteria for verification
+
+Your description:
+"<first 100 chars of description>..."
+
+Add the missing elements using this template:
+
+## Context (WHY)
+[Explain why this work is needed - who is affected, what triggered it]
+
+## Problem (WHAT)
+Current: [What's happening now that shouldn't be]
+Desired: [What should happen instead]
+
+## Acceptance Criteria (HOW)
+- [ ] [Specific, testable condition 1]
+- [ ] [Specific, testable condition 2]
+
+Options:
+[1] Add missing elements now (recommended)
+[2] Create anyway - I'll add details later
+[3] Cancel
+
+Your choice: _
+```
+
+**Corrective Prompt (Description - Short)**:
+```
+⚠️  Description is brief: <N> characters
+
+For <type> issues, we recommend at least <minimum> characters.
+
+Your description:
+"<full description>"
+
+Tips to expand:
+• Add context: Why is this needed? Who reported it?
+• Be specific: What exactly should change?
+• Add criteria: How will you know it's done?
+• Add location: What files/components are involved?
+
+Options:
+[1] Expand description now
+[2] Use description template
+[3] Keep as-is (not recommended for <type>)
+
+Your choice: _
+```
+
+#### Combined Quality Score
+
+```python
+def calculate_quality_score(title, description, issue_type):
+    score = 0
+    issues = []
+
+    # Title checks (max 30 points)
+    title_len = len(title)
+    if title_len >= 30:
+        score += 15
+    elif title_len >= 10:
+        score += 10
+    else:
+        issues.append("Title too short")
+
+    if not is_vague(title):
+        score += 15
+    else:
+        issues.append("Title may be vague")
+
+    # Description checks (max 70 points)
+    desc_len = len(description)
+    min_len = MIN_LENGTHS[issue_type]
+
+    if desc_len >= min_len * 2:
+        score += 20
+    elif desc_len >= min_len:
+        score += 15
+    elif desc_len >= min_len / 2:
+        score += 5
+        issues.append("Description shorter than recommended")
+    else:
+        issues.append("Description too short")
+
+    structure = detect_structure(description)
+    for element in ['why', 'what', 'how']:
+        if structure[element]['present']:
+            score += 15
+        else:
+            issues.append(f"Missing {element.upper()}")
+
+    if structure['where']['present']:
+        score += 5
+
+    # Determine result
+    if score >= 80:
+        return ('PASS', score, issues)
+    elif score >= 50:
+        return ('WARNING', score, issues)
+    else:
+        return ('FAIL', score, issues)
+```
+
+**Quality Score Display**:
+```
+Quality Analysis
+================
+
+Title:       "<title>"
+Description: <N> characters
+Type:        <type>
+
+Score: <score>/100
+
+Breakdown:
+  Title length:     <points>/15  <status>
+  Title clarity:    <points>/15  <status>
+  Desc length:      <points>/20  <status>
+  WHY (context):    <points>/15  <status>
+  WHAT (problem):   <points>/15  <status>
+  HOW (criteria):   <points>/15  <status>
+  WHERE (location): <points>/5   <status>
+
+Result: <PASS|WARNING|FAIL>
+
+<if issues>
+Issues to address:
+• <issue 1>
+• <issue 2>
+</if>
+```
+
 ### --review Flag (Optional Quality Review)
 
 **If `--review` flag provided**:
