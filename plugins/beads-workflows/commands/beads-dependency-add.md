@@ -493,6 +493,129 @@ Dependency addition is successful when:
 - ✅ Verification shows expected blocking behavior
 - ✅ User understands the effect of the dependency
 
+## Validation Checkpoints
+
+This command enforces beads discipline through explicit validation checkpoints. Each checkpoint invokes the `beads-disciplinarian` agent for dependency validation.
+
+### Checkpoint 1: Temporal Thinking Detection (Phase 2)
+
+**Trigger**: After parsing dependency request
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- User's original request/description
+- Proposed: <dependent> depends on <required>
+
+Temporal thinking detection:
+- Scan for: "first", "then", "before", "after", "Phase 1", "Step 1"
+- These trigger WARNING: likely inverted dependency
+
+Expected response:
+- PASS: Causal reasoning detected ("needs", "requires", "depends on")
+- WARNING: Temporal language detected (confirm direction)
+- FAIL: Cannot determine intent (ask for clarification)
+```
+
+**On WARNING**: Force explicit confirmation with the key question:
+"Does <dependent> NEED <required> to be finished before it can start?"
+
+### Checkpoint 2: Causal Verification (Phase 2)
+
+**Trigger**: Before proceeding from dependency-thinking guidance
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- Dependent issue title and description
+- Required issue title and description
+- Proposed relationship type
+
+Causal verification:
+- Question: "Can <dependent> be started without <required> complete?"
+- If YES → wrong direction, flip
+- If NO → correct direction, proceed
+
+Expected response:
+- PASS: Direction confirmed correct
+- FLIP: Direction should be inverted
+- FAIL: Relationship unclear (escalate to user)
+```
+
+**On FLIP**: Automatically swap dependent and required before proceeding.
+
+### Checkpoint 3: Cycle Prevention (Phase 3)
+
+**Trigger**: Before adding dependency
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- Current dependency tree of <required>
+- Proposed new link
+
+Cycle detection:
+- Trace: Does <dependent> appear anywhere in <required>'s dependency chain?
+- If YES → cycle would be created → FAIL
+- If NO → safe to add → PASS
+
+Expected response:
+- PASS: No cycle, safe to add
+- FAIL: Cycle detected (show chain, block addition)
+```
+
+**On FAIL**: Block dependency addition. Show the cycle chain. Suggest alternatives.
+
+### Checkpoint 4: Post-Addition Verification (Phase 5)
+
+**Trigger**: After bd dep add completes
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- bd blocked output
+- bd show <dependent> output
+
+Verification check:
+- [ ] Dependency appears in issue details
+- [ ] Blocking behavior matches type
+- [ ] No unexpected side effects
+
+Expected response:
+- PASS: Dependency verified correct
+- WARNING: Unexpected state (investigate)
+- FAIL: Dependency not applied (retry or escalate)
+```
+
+**On WARNING**: Display unexpected state and ask user to verify.
+
+### Agent Integration
+
+When invoking beads-disciplinarian for validation:
+
+```markdown
+Validate dependency addition for compliance:
+
+Dependency request:
+- Dependent: <dependent-id> - <dependent-title>
+- Required: <required-id> - <required-title>
+- Type: <blocks|parent-child|discovered-from|related>
+
+User's original language:
+"<original request text>"
+
+Check:
+1. Temporal thinking detection (first/then/before → WARNING)
+2. Causal reasoning verification ("Y needs X" pattern)
+3. Cycle prevention (trace dependency chain)
+4. Type appropriateness
+
+Key question to answer:
+"Does <dependent> NEED <required> to be finished before it can start?"
+
+Return: PASS, WARNING, FLIP, or FAIL with explanation
+```
+
 ## Notes
 
 **The Golden Rule**:

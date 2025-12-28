@@ -421,6 +421,89 @@ Session start is successful when:
 - ✅ No orphaned in_progress issues (single-issue discipline)
 - ✅ Agent ready to begin implementation
 
+## Validation Checkpoints
+
+This command enforces beads discipline through explicit validation checkpoints. Each checkpoint invokes the `beads-disciplinarian` agent for compliance validation.
+
+### Checkpoint 1: Single-Issue Discipline (Phase 3)
+
+**Trigger**: After checking for orphaned in-progress work
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- Current in_progress issues from bd list
+- Request: Validate single-issue discipline
+
+Expected response:
+- PASS: 0 or 1 in_progress issues
+- FAIL: 2+ in_progress issues (must resolve before proceeding)
+```
+
+**On FAIL**: Block session start until user resolves multiple in_progress issues.
+
+### Checkpoint 2: Work Selection Confirmation (Phase 5)
+
+**Trigger**: Before claiming an issue
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- Selected issue ID
+- Current session state
+
+Expected response:
+- PASS: Issue is ready (unblocked) and appropriate
+- WARNING: Issue has unusual characteristics (explain)
+- FAIL: Issue is blocked or invalid
+```
+
+**On FAIL**: Redirect to alternative issue selection.
+
+### Checkpoint 3: Session Start Complete (Phase 8)
+
+**Trigger**: Before displaying session summary
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- Session start checklist state
+- Claimed issue details
+
+Full compliance check:
+- [ ] bd sync completed
+- [ ] Exactly ONE issue in_progress
+- [ ] Issue context loaded
+- [ ] No violations detected
+
+Expected response:
+- PASS: Session started correctly
+- WARNING: Proceed with noted concerns
+```
+
+**On WARNING**: Display concerns but allow proceed.
+
+### Agent Integration
+
+When invoking beads-disciplinarian for validation:
+
+```markdown
+Validate session start for compliance:
+
+Session state:
+- Working directory: <pwd>
+- Git status: <clean|uncommitted>
+- In-progress issues: <count>
+- Selected issue: <id>
+
+Check:
+1. Single-issue discipline
+2. Session ritual completeness
+3. Work selection appropriateness
+
+Return: PASS, WARNING, or FAIL with explanation
+```
+
 ## Notes
 
 **Performance**: This command prioritizes thoroughness over speed. Expect 30-60 seconds for complete session initialization due to:

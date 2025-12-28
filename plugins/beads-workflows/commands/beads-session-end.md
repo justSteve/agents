@@ -460,6 +460,108 @@ Session end is successful when:
 - ✅ No orphaned in_progress issues
 - ✅ Handoff notes recorded (if applicable)
 
+## Validation Checkpoints
+
+This command enforces beads discipline through explicit validation checkpoints. Each checkpoint invokes the `beads-disciplinarian` agent for compliance validation.
+
+### Checkpoint 1: Work Status Audit (Phase 1)
+
+**Trigger**: At session end initiation
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- All in_progress issues from bd list
+- Uncommitted git changes
+
+Expected response:
+- PASS: 0-1 in_progress issues, git status known
+- WARNING: Multiple in_progress (must address each)
+- FAIL: Unknown state or critical issue
+```
+
+**On WARNING**: Force resolution of each in_progress issue before proceeding.
+
+### Checkpoint 2: Session Close Checklist (Phase 3)
+
+**Trigger**: Before executing close checklist
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- Session close checklist template
+- Request: Confirm all steps will be executed
+
+Mandatory steps (NEVER skip):
+- [ ] git status
+- [ ] git add
+- [ ] bd sync (pre-commit)
+- [ ] git commit
+- [ ] bd sync (post-commit)
+- [ ] git push
+- [ ] bd close (if applicable)
+
+Expected response:
+- PASS: Checklist understood, ready to execute
+```
+
+**On incomplete**: Block session end until all steps planned.
+
+### Checkpoint 3: Clean State Verification (Phase 4)
+
+**Trigger**: After all close steps complete
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- Final git status
+- Final bd list --status in_progress
+- Push confirmation
+
+Full compliance check:
+- [ ] Git working tree clean
+- [ ] No orphaned in_progress issues
+- [ ] All changes pushed to remote
+- [ ] Session end ritual complete
+
+Expected response:
+- PASS: Session ended cleanly
+- WARNING: Ended with noted concerns
+- FAIL: Critical step incomplete
+```
+
+**On FAIL**: Block completion claim until resolved.
+
+### Agent Integration
+
+When invoking beads-disciplinarian for validation:
+
+```markdown
+Validate session end for compliance:
+
+Session state:
+- In-progress issues: <list>
+- Git status: <status>
+- Uncommitted changes: <count>
+
+Checklist execution:
+- git status: <done|pending>
+- git add: <done|pending>
+- bd sync (pre): <done|pending>
+- git commit: <done|pending>
+- bd sync (post): <done|pending>
+- git push: <done|pending>
+
+Check:
+1. Session end ritual completeness
+2. No orphaned in_progress issues
+3. All changes pushed
+
+Return: PASS, WARNING, or FAIL with explanation
+
+CRITICAL: Work is NOT done until git push completes!
+```
+
 ## Notes
 
 **The "Never Skip" Rule**: Every step in the session close checklist exists to prevent common problems:

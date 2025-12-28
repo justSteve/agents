@@ -515,6 +515,130 @@ Issue creation is successful when:
 - ✅ No circular dependencies created
 - ✅ Issue visible in `bd list` and `bd ready` (if unblocked)
 
+## Validation Checkpoints
+
+This command enforces beads discipline through explicit validation checkpoints. Each checkpoint invokes the `beads-issue-reviewer` agent for quality validation.
+
+### Checkpoint 1: Title Quality (Phase 1)
+
+**Trigger**: After title is provided
+
+**Validation**:
+```
+Invoke beads-issue-reviewer with context:
+- Proposed title
+- Issue type
+
+Title validation rules:
+- Length: 10-100 characters (optimal: 30-70)
+- Content: Describes WHAT, not HOW
+- Specificity: Concrete, not vague
+- No red flags: "Fix bug", "Update", "Refactor" alone
+
+Expected response:
+- PASS: Title is clear and specific
+- WARNING: Title could be improved (suggest better)
+- FAIL: Title is vague or inappropriate (block until fixed)
+```
+
+**On FAIL**: Block creation until title is improved. Show examples.
+
+### Checkpoint 2: Description Quality (Phase 2)
+
+**Trigger**: After description is provided
+
+**Validation**:
+```
+Invoke beads-issue-reviewer with context:
+- Full description
+- Issue type
+- Priority
+
+Description validation rules:
+- Why: Problem statement present (required)
+- What: Scope/approach defined (required)
+- How discovered: Context if applicable (recommended)
+- Minimum length by type (task: 50, bug: 100, feature: 100, epic: 200)
+
+Expected response:
+- PASS: Description meets quality standards
+- WARNING: Missing recommended elements (list them)
+- FAIL: Missing required elements (block until added)
+```
+
+**On FAIL**: Block creation. Show template and missing elements.
+
+### Checkpoint 3: Pre-Creation Validation (Phase 3)
+
+**Trigger**: Before executing bd create
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- Complete issue draft (title, description, type, priority)
+- Dependencies to add
+
+Full compliance check:
+- [ ] Title passes quality check
+- [ ] Description has Why/What/How
+- [ ] Type is appropriate for content
+- [ ] Priority is justified
+- [ ] Dependencies use correct direction
+
+Expected response:
+- PASS: Ready to create
+- WARNING: Create with noted concerns
+- FAIL: Critical issues must be resolved
+```
+
+**On FAIL**: Block creation until all issues resolved.
+
+### Checkpoint 4: Dependency Direction (Phase 4)
+
+**Trigger**: When adding dependencies
+
+**Validation**:
+```
+Invoke beads-disciplinarian with context:
+- Proposed dependency (dependent, required, type)
+- Request: Validate causal reasoning
+
+Dependency validation:
+- Question: "Does <dependent> NEED <required>?"
+- Check: No temporal thinking ("first", "then", "before")
+- Verify: Correct bd dep add syntax
+
+Expected response:
+- PASS: Dependency direction correct
+- WARNING: Direction may be inverted (confirm with user)
+- FAIL: Circular dependency or invalid issue
+```
+
+**On WARNING**: Force user confirmation of direction before proceeding.
+
+### Agent Integration
+
+When invoking beads-issue-reviewer for validation:
+
+```markdown
+Review issue quality before creation:
+
+Issue draft:
+- Title: "<title>"
+- Type: <type>
+- Priority: P<priority>
+- Description: "<description>"
+- Dependencies: <list>
+
+Check:
+1. Title quality (specific, actionable)
+2. Description quality (Why/What/How structure)
+3. Acceptance criteria (if present)
+4. Metadata appropriateness
+
+Return: Score (1-5), PASS/WARNING/FAIL, specific improvements
+```
+
 ## Notes
 
 **The "Future Self" Rule**: Write descriptions for your future self who has forgotten all context. If you can't understand an issue 6 months later, it's not good enough.
