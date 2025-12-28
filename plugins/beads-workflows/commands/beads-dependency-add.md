@@ -194,6 +194,352 @@ If this sounds WRONG -> you may have the direction inverted
 [Press Enter to continue or 'flip' to swap]
 ```
 
+### Causal Reasoning Validation
+
+This section provides the implementation-level validation for distinguishing true causal dependencies from temporal sequences.
+
+#### The Core Question
+
+Before adding any dependency, the agent must answer this question:
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        CAUSAL REASONING CHECK                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  You are adding: <dependent> depends on <required>                          │
+│                                                                             │
+│  Answer this question honestly:                                             │
+│                                                                             │
+│  "Does <dependent> truly NEED <required> to proceed?"                       │
+│                                                                             │
+│  vs                                                                         │
+│                                                                             │
+│  "Does <required> just happen BEFORE <dependent> temporally?"               │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ NEED = Cannot physically/logically start without                    │   │
+│  │ BEFORE = Preferred order but could technically work either way      │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### Decision Tree
+
+```
+START: You want to add a dependency
+
+Q1: "Can <dependent> be STARTED without <required> being complete?"
+    │
+    ├─ YES → Q2: "Would starting <dependent> first cause problems?"
+    │         │
+    │         ├─ YES → Use 'blocks' - there's a hidden dependency
+    │         │
+    │         └─ NO → Q3: "Is this just a preferred order?"
+    │                  │
+    │                  ├─ YES → DON'T add 'blocks' - use 'related' or nothing
+    │                  │
+    │                  └─ NO → Re-evaluate - may not need dependency at all
+    │
+    └─ NO → Q4: "Is this because <dependent> technically requires <required>'s output?"
+             │
+             ├─ YES → CORRECT: Use 'blocks' with bd dep add <dependent> <required>
+             │
+             └─ NO → Q5: "Is this organizational (epic/task hierarchy)?"
+                      │
+                      ├─ YES → Use 'parent-child' instead of 'blocks'
+                      │
+                      └─ NO → Re-evaluate the relationship
+```
+
+#### Validation Prompts
+
+**Prompt 1: Initial Causal Check**
+```
+Causal Reasoning Check
+======================
+
+Proposed: <dependent> depends on <required>
+
+Let's verify this is a TRUE dependency, not just temporal ordering.
+
+Question: Can you START working on "<dependent-title>" without
+          "<required-title>" being complete?
+
+[A] NO - I literally cannot start (code won't compile, API doesn't exist, etc.)
+    → This is a TRUE causal dependency ✓
+
+[B] YES, but it would be inefficient or cause rework
+    → This is a SOFT dependency - consider 'related' instead
+
+[C] YES, the order is just my preference
+    → This is TEMPORAL thinking - no dependency needed
+
+[D] I'm not sure
+    → Let's analyze further
+
+Your answer: _
+```
+
+**Prompt 2: Temporal Language Detection**
+```python
+def detect_temporal_language(user_input):
+    """Detect if user is using temporal rather than causal reasoning."""
+
+    TEMPORAL_PATTERNS = [
+        (r'\bfirst\b.*\bthen\b', 'first...then'),
+        (r'\bbefore\b', 'before'),
+        (r'\bafter\b', 'after'),
+        (r'\bphase\s*\d', 'Phase N'),
+        (r'\bstep\s*\d', 'Step N'),
+        (r'\bpart\s*\d', 'Part N'),
+        (r'\binitial(ly)?\b', 'initial'),
+        (r'\bsubsequent(ly)?\b', 'subsequent'),
+        (r'\bprior\s+to\b', 'prior to'),
+        (r'\bfollowed\s+by\b', 'followed by'),
+    ]
+
+    CAUSAL_PATTERNS = [
+        (r'\bneeds?\b', 'needs'),
+        (r'\brequires?\b', 'requires'),
+        (r'\bdepends?\s+on\b', 'depends on'),
+        (r'\bblocked\s+by\b', 'blocked by'),
+        (r'\bcannot\b.*\bwithout\b', 'cannot...without'),
+        (r'\bmust\s+have\b', 'must have'),
+        (r'\bprerequisite\b', 'prerequisite'),
+    ]
+
+    temporal_matches = []
+    causal_matches = []
+
+    for pattern, name in TEMPORAL_PATTERNS:
+        if regex.search(pattern, user_input, IGNORECASE):
+            temporal_matches.append(name)
+
+    for pattern, name in CAUSAL_PATTERNS:
+        if regex.search(pattern, user_input, IGNORECASE):
+            causal_matches.append(name)
+
+    if temporal_matches and not causal_matches:
+        return ('WARNING', temporal_matches,
+                "Temporal language detected - verify this is a true dependency")
+    elif causal_matches:
+        return ('PASS', causal_matches,
+                "Causal language detected - likely correct dependency")
+    else:
+        return ('UNCLEAR', [],
+                "Cannot determine reasoning type - please clarify")
+```
+
+**Prompt 3: Temporal Warning**
+```
+⚠️  TEMPORAL LANGUAGE DETECTED
+
+You used: <detected patterns>
+
+This suggests you're thinking about ORDER rather than REQUIREMENTS.
+
+Common trap:
+  "I want to do X before Y"
+  ≠
+  "Y needs X"
+
+Let's verify with a concrete test:
+
+Imagine <required-title> doesn't exist yet.
+Can you write ANY code for <dependent-title>?
+
+[A] NO - The code literally cannot be written
+    → TRUE dependency - proceed with blocks
+
+[B] YES - I could write placeholder/stub code
+    → SOFT dependency - reconsider if blocks is appropriate
+
+[C] YES - It's completely independent work
+    → NO dependency - abort and reconsider
+
+Your answer: _
+```
+
+#### Verification Using bd blocked
+
+After adding a dependency, verify using `bd blocked`:
+
+**Verification Command Sequence**:
+```bash
+# Step 1: Add the dependency
+bd dep add <dependent> <required> --type blocks
+
+# Step 2: Immediately verify with bd blocked
+bd blocked
+
+# Step 3: Verify specific issue
+bd show <dependent>
+```
+
+**Expected Output (Correct Direction)**:
+```
+$ bd blocked
+
+Blocked issues:
+  <dependent>: <dependent-title>
+    Blocked by: <required> (<required-title>)
+
+This is CORRECT if:
+✓ <dependent> is the work that WAITS
+✓ <required> is the work that must be DONE FIRST
+```
+
+**Expected Output (Inverted - WRONG)**:
+```
+$ bd blocked
+
+Blocked issues:
+  <required>: <required-title>
+    Blocked by: <dependent> (<dependent-title>)
+
+⚠️  THIS LOOKS WRONG!
+
+You probably meant for <dependent> to wait for <required>,
+but you've made <required> wait for <dependent>.
+
+This happens when you use temporal thinking:
+  "Do X first" → brain says → bd dep add X Y  ← WRONG!
+
+Fix it:
+  bd dep remove <required> <dependent>
+  bd dep add <dependent> <required>
+```
+
+#### Verification Prompts
+
+**Post-Addition Verification**:
+```
+Dependency Added - Verification Required
+========================================
+
+Command executed: bd dep add <dependent> <required> --type blocks
+
+Now let's verify this is correct.
+
+Running: bd blocked
+
+Output:
+<bd blocked output>
+
+Verification Questions:
+
+1. Is <dependent> shown as BLOCKED?
+   [Y] Yes, as expected
+   [N] No - something is wrong
+
+2. Is <required> shown as the BLOCKER?
+   [Y] Yes, as expected
+   [N] No - dependency may be inverted
+
+3. Does this match your intent?
+   "<dependent-title>" waits for "<required-title>"
+   [Y] Yes, correct
+   [N] No, I meant the opposite
+
+If all [Y]: ✓ Dependency verified correct
+If any [N]: ⚠️ Investigate and potentially flip
+```
+
+**Semantic Verification**:
+```
+Final Semantic Check
+====================
+
+The system now believes:
+
+  "<dependent-title>"
+       │
+       │ is BLOCKED BY
+       │
+       ▼
+  "<required-title>"
+
+Read this out loud:
+"I cannot start '<dependent-title>' until '<required-title>' is complete."
+
+Does this statement make sense?
+
+[Y] Yes, that's exactly right
+    → Verification complete ✓
+
+[N] No, it should be the other way around
+    → Flipping dependency...
+
+[?] I'm not sure
+    → Let's walk through the logic again
+```
+
+#### Examples: Causal vs Temporal
+
+**Example 1: Database and API**
+
+```
+Scenario: Building an API that reads from a database
+
+TEMPORAL thinking (WRONG):
+  "First we create the database, then we write the API"
+  → Brain says: bd dep add database api  ← WRONG!
+  → This says: database needs api (backwards!)
+
+CAUSAL thinking (CORRECT):
+  "The API NEEDS the database to exist"
+  → Brain says: bd dep add api database  ← CORRECT!
+  → This says: api needs database ✓
+
+Verification:
+  $ bd blocked
+  api: blocked by database  ← Makes sense!
+```
+
+**Example 2: Design and Implementation**
+
+```
+Scenario: Design phase before implementation
+
+TEMPORAL thinking (WRONG):
+  "Phase 1 is design, Phase 2 is implementation"
+  → Brain says: bd dep add design implementation  ← WRONG!
+  → This says: design needs implementation (backwards!)
+
+CAUSAL thinking (CORRECT):
+  "Implementation NEEDS the design to be complete"
+  → Brain says: bd dep add implementation design  ← CORRECT!
+  → This says: implementation needs design ✓
+
+Verification:
+  $ bd blocked
+  implementation: blocked by design  ← Makes sense!
+```
+
+**Example 3: Tests and Code**
+
+```
+Scenario: Writing tests for new code
+
+TEMPORAL thinking (WRONG):
+  "Write code first, then tests"
+  → Brain says: bd dep add code tests  ← WRONG!
+  → This says: code needs tests (backwards for this scenario!)
+
+CAUSAL thinking (CORRECT):
+  "Tests NEED the code to exist to test it"
+  → Brain says: bd dep add tests code  ← CORRECT!
+  → This says: tests needs code ✓
+
+Note: TDD reverses this - tests come first!
+  → bd dep add code tests  ← Correct for TDD!
+  → "Code needs tests (to know what to implement)"
+
+Context matters for causal direction!
+```
+
 ## Phase 3: Validate Issues and Check for Cycles
 
 Verify both issues exist and dependency won't create a cycle.
