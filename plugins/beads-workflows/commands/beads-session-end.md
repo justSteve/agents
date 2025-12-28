@@ -322,6 +322,442 @@ Warnings:
 Please review before starting next session.
 ```
 
+## Session Cleanup Verification
+
+This section provides implementation-level verification to ensure complete session cleanup before claiming completion.
+
+### Verification 1: In-Progress Issues Resolution
+
+All in_progress issues must be resolved to either closed or open status.
+
+**Verification Command**:
+```bash
+bd list --status in_progress
+```
+
+**Expected Output (PASS)**:
+```
+No issues found with status: in_progress
+
+✓ All in_progress issues resolved
+```
+
+**Expected Output (FAIL)**:
+```
+Found 2 issues with status: in_progress:
+  agents-abc: Some task title
+  agents-xyz: Another task
+
+❌ VERIFICATION FAILED: Orphaned in_progress issues
+
+Each issue must be resolved:
+- Close if complete: bd close <id>
+- Return to open: bd update <id> --status=open
+
+Session cleanup incomplete.
+```
+
+**Verification Logic**:
+```python
+def verify_in_progress_resolved():
+    """Verify no issues remain in in_progress status."""
+
+    result = run_command("bd list --status in_progress --json")
+    issues = parse_json(result)
+
+    if len(issues) == 0:
+        return ('PASS', "All in_progress issues resolved")
+
+    elif len(issues) == 1:
+        # One issue is acceptable if it was just closed
+        issue = issues[0]
+        if recently_closed(issue):
+            return ('PASS', f"Issue {issue['id']} recently closed")
+        else:
+            return ('FAIL', f"Issue {issue['id']} still in_progress",
+                    f"Close with: bd close {issue['id']}")
+
+    else:
+        # Multiple in_progress is always a failure
+        ids = [i['id'] for i in issues]
+        return ('FAIL', f"Multiple issues in_progress: {ids}",
+                "Resolve each before ending session")
+```
+
+**Resolution Prompt**:
+```
+Orphaned In-Progress Issue Found
+=================================
+
+Issue: <id> - <title>
+Status: in_progress
+Started: <timestamp>
+
+This issue must be resolved before session can end.
+
+Options:
+[1] Close - Work is complete
+    → bd close <id> --reason="..."
+
+[2] Return to open - Work continues later
+    → bd update <id> --status=open --notes="..."
+
+[3] Mark blocked - Waiting on external factor
+    → bd update <id> --status=blocked --reason="..."
+
+Your choice: _
+```
+
+### Verification 2: bd sync Success
+
+Both pre-commit and post-commit syncs must complete successfully.
+
+**Verification Commands**:
+```bash
+# Pre-commit sync
+bd sync
+echo "Exit code: $?"
+
+# Post-commit sync
+bd sync
+echo "Exit code: $?"
+```
+
+**Expected Output (PASS)**:
+```
+→ Exporting pending changes to JSONL...
+→ No changes to commit
+✓ Sync complete
+
+Exit code: 0
+
+✓ bd sync executed successfully
+```
+
+**Expected Output (FAIL)**:
+```
+→ Exporting pending changes to JSONL...
+Error: Failed to write to .beads/issues.jsonl
+Exit code: 1
+
+❌ VERIFICATION FAILED: bd sync unsuccessful
+
+Common causes:
+- File permission issue
+- Disk full
+- .beads directory missing
+- Merge conflict in issues.jsonl
+
+Resolution:
+1. Check .beads/ directory exists
+2. Verify write permissions
+3. Resolve any merge conflicts
+4. Retry: bd sync
+```
+
+**Verification Logic**:
+```python
+def verify_sync_success():
+    """Verify bd sync completes without errors."""
+
+    # Pre-commit sync
+    pre_result = run_command("bd sync")
+    pre_exit = get_exit_code()
+
+    if pre_exit != 0:
+        return ('FAIL', "Pre-commit sync failed",
+                f"Error: {pre_result}")
+
+    # Post-commit sync (after git commit)
+    post_result = run_command("bd sync")
+    post_exit = get_exit_code()
+
+    if post_exit != 0:
+        return ('FAIL', "Post-commit sync failed",
+                f"Error: {post_result}")
+
+    return ('PASS', "Both syncs completed successfully")
+```
+
+**Sync Verification Display**:
+```
+Sync Status Verification
+========================
+
+Pre-commit sync:
+  Command: bd sync
+  Result: <success|failed>
+  Output: <first 100 chars>
+
+Post-commit sync:
+  Command: bd sync
+  Result: <success|failed>
+  Output: <first 100 chars>
+
+Verification: <PASS|FAIL>
+```
+
+### Verification 3: Git Clean State
+
+Git working tree must be clean with all changes committed and pushed.
+
+**Verification Commands**:
+```bash
+# Check for uncommitted changes
+git status --porcelain
+
+# Check for unpushed commits
+git log origin/main..HEAD --oneline
+```
+
+**Expected Output (PASS)**:
+```
+$ git status --porcelain
+(no output = clean)
+
+$ git log origin/main..HEAD --oneline
+(no output = all pushed)
+
+✓ Git working tree clean
+✓ All commits pushed
+```
+
+**Expected Output (FAIL - Uncommitted)**:
+```
+$ git status --porcelain
+ M src/file.ts
+?? new-file.js
+
+❌ VERIFICATION FAILED: Uncommitted changes
+
+Modified files:
+  - src/file.ts
+
+Untracked files:
+  - new-file.js
+
+Resolution:
+1. Stage: git add .
+2. Commit: git commit -m "..."
+3. Push: git push
+```
+
+**Expected Output (FAIL - Unpushed)**:
+```
+$ git log origin/main..HEAD --oneline
+abc1234 feat: some change
+def5678 fix: another change
+
+❌ VERIFICATION FAILED: Unpushed commits
+
+2 commits not pushed to remote.
+
+Resolution:
+git push
+```
+
+**Verification Logic**:
+```python
+def verify_git_clean():
+    """Verify git working tree is clean and all commits pushed."""
+
+    # Check uncommitted changes
+    status = run_command("git status --porcelain")
+    if status.strip():
+        files = status.strip().split('\n')
+        return ('FAIL', f"Uncommitted changes: {len(files)} files",
+                "Stage, commit, and push before claiming complete")
+
+    # Check unpushed commits
+    unpushed = run_command("git log origin/main..HEAD --oneline")
+    if unpushed.strip():
+        commits = unpushed.strip().split('\n')
+        return ('FAIL', f"Unpushed commits: {len(commits)}",
+                "Run: git push")
+
+    return ('PASS', "Git clean: no uncommitted changes, all commits pushed")
+```
+
+**Git State Display**:
+```
+Git State Verification
+======================
+
+Working Tree:
+  Modified:   <count> files
+  Untracked:  <count> files
+  Staged:     <count> files
+  Status:     <clean|dirty>
+
+Remote Sync:
+  Branch:     <branch-name>
+  Ahead:      <count> commits
+  Behind:     <count> commits
+  Status:     <synced|needs-push|needs-pull>
+
+Verification: <PASS|FAIL>
+```
+
+### Verification 4: Discovered Work Filed
+
+Any work discovered during the session should be filed as new issues with proper dependencies.
+
+**Verification Approach**:
+
+This verification is conversational - the agent must confirm no discovered work was left unfiled.
+
+**Verification Prompt**:
+```
+Discovered Work Verification
+============================
+
+During this session, did you encounter any of the following?
+
+• Bugs found while implementing the main issue
+• Refactoring opportunities noticed but not addressed
+• Technical debt identified
+• Follow-up tasks that came to mind
+• Edge cases that need separate handling
+
+[Y] Yes, I found additional work
+    → File each as a new issue before proceeding
+
+[N] No, all discovered work has been filed
+    → Verification complete
+
+Your answer: _
+```
+
+**If Yes - Filing Guidance**:
+```
+Filing Discovered Work
+======================
+
+For each discovered item, file using:
+
+bd create --title="<descriptive title>" \
+  --description="## Context
+Discovered while working on <current-issue-id>: <current-issue-title>
+
+## Problem
+<what you found>
+
+## Notes
+- Found in: <file:line or component>
+- Priority: <your assessment>" \
+  --deps discovered-from:<current-issue-id>
+
+The --deps flag links this issue back to where it was discovered.
+
+File discovered work now, then continue with session end.
+```
+
+**Verification Logic**:
+```python
+def verify_discovered_work_filed():
+    """Verify all discovered work has been filed as issues."""
+
+    # Check for recently created issues with discovered-from dependency
+    recent_issues = run_command(
+        "bd list --created-after='session-start' --json"
+    )
+    discovered = [i for i in parse_json(recent_issues)
+                  if has_discovered_from_dep(i)]
+
+    if discovered:
+        return ('INFO', f"Filed {len(discovered)} discovered issues",
+                [i['id'] for i in discovered])
+
+    # Ask agent to confirm no unfiled work
+    response = prompt_user("""
+        Did you discover any work during this session that hasn't been filed?
+        [Y/N]
+    """)
+
+    if response == 'Y':
+        return ('INCOMPLETE', "Discovered work needs to be filed",
+                "Use bd create with --deps discovered-from:<id>")
+
+    return ('PASS', "No unfiled discovered work")
+```
+
+**Discovered Work Display**:
+```
+Discovered Work Summary
+=======================
+
+Issues filed during this session with discovered-from dependencies:
+
+  <new-id-1>: <title>
+    └─ discovered from: <parent-id>
+
+  <new-id-2>: <title>
+    └─ discovered from: <parent-id>
+
+Total discovered work filed: <count>
+
+Verification: <PASS|INCOMPLETE>
+```
+
+### Combined Cleanup Verification
+
+Run all verifications before claiming session complete:
+
+```
+┌──────────────────────────────────────────────────────────────────────────┐
+│                    SESSION CLEANUP VERIFICATION                          │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  1. In-Progress Issues                                                   │
+│     Command: bd list --status in_progress                                │
+│     Expected: 0 issues                                                   │
+│     Status: [ ] PASS  [ ] FAIL                                           │
+│                                                                          │
+│  2. bd sync Success                                                      │
+│     Commands: bd sync (pre-commit), bd sync (post-commit)                │
+│     Expected: Exit code 0 for both                                       │
+│     Status: [ ] PASS  [ ] FAIL                                           │
+│                                                                          │
+│  3. Git Clean State                                                      │
+│     Commands: git status --porcelain, git log origin..HEAD               │
+│     Expected: No output (clean, all pushed)                              │
+│     Status: [ ] PASS  [ ] FAIL                                           │
+│                                                                          │
+│  4. Discovered Work Filed                                                │
+│     Check: All found work filed with discovered-from dep                 │
+│     Expected: User confirms none unfiled                                 │
+│     Status: [ ] PASS  [ ] INCOMPLETE                                     │
+│                                                                          │
+├──────────────────────────────────────────────────────────────────────────┤
+│                                                                          │
+│  ALL PASS: ✅ Session cleanup complete - safe to claim "done"            │
+│  ANY FAIL: ❌ Resolve failures before claiming complete                  │
+│                                                                          │
+└──────────────────────────────────────────────────────────────────────────┘
+```
+
+**Final Verification Output**:
+```
+Session Cleanup Verification Complete
+=====================================
+
+✓ In-progress issues: 0 remaining (all resolved)
+✓ bd sync: Pre-commit and post-commit successful
+✓ Git state: Clean working tree, all commits pushed
+✓ Discovered work: None unfiled (or N issues filed)
+
+═══════════════════════════════════════════════════════════════════════════
+                         SESSION END VERIFIED
+═══════════════════════════════════════════════════════════════════════════
+
+You may now claim "done" or "complete" for this session.
+
+Summary:
+- Issue closed: <id> - <title>
+- Commits pushed: <count>
+- Session duration: <time>
+```
+
 ## Error Handling
 
 ### Error: Uncommitted Changes Won't Stage
