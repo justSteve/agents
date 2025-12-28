@@ -1,0 +1,76 @@
+{
+  "$schema": "https://beads.dev/schemas/initial-issues.json",
+  "version": "1.0",
+  "description": "Go project setup issues",
+  "variables": {
+    "PROJECT_NAME": {
+      "description": "Human-readable project name",
+      "required": true
+    },
+    "PROJECT_SLUG": {
+      "description": "Binary/project name (lowercase, hyphens)",
+      "required": true
+    },
+    "MODULE_PATH": {
+      "description": "Go module path (e.g., github.com/user/repo)",
+      "required": true
+    }
+  },
+  "issues": [
+    {
+      "id": "setup-epic",
+      "title": "{{PROJECT_NAME}} Initial Setup",
+      "type": "epic",
+      "priority": 1,
+      "description": "Complete Go project setup with module, testing, and linting."
+    },
+    {
+      "id": "module-init",
+      "title": "Initialize Go module",
+      "type": "task",
+      "priority": 1,
+      "description": "Set up Go module:\n- Verify go.mod has correct module path\n- Run `go mod tidy`\n- Verify Go version >= 1.21\n- Test that `go build ./...` works",
+      "depends_on": ["setup-epic"]
+    },
+    {
+      "id": "project-structure",
+      "title": "Create Go project structure",
+      "type": "task",
+      "priority": 1,
+      "description": "Create standard Go layout:\n- cmd/{{PROJECT_SLUG}}/main.go (entry point)\n- internal/ (private packages)\n- pkg/ (public packages, if needed)\n- Verify imports work correctly",
+      "depends_on": ["setup-epic"]
+    },
+    {
+      "id": "testing-setup",
+      "title": "Configure Go testing",
+      "type": "task",
+      "priority": 1,
+      "description": "Set up testing:\n- Create first test file (*_test.go)\n- Run `go test ./...` and confirm it passes\n- Configure coverage: `go test -coverprofile=coverage.out ./...`\n- Add Makefile targets for testing",
+      "depends_on": ["module-init", "project-structure"]
+    },
+    {
+      "id": "linting-setup",
+      "title": "Configure golangci-lint",
+      "type": "task",
+      "priority": 2,
+      "description": "Set up linting:\n- Install golangci-lint\n- Create .golangci.yml configuration\n- Run `golangci-lint run` and fix issues\n- Add lint target to Makefile",
+      "depends_on": ["module-init"]
+    },
+    {
+      "id": "ci-pipeline",
+      "title": "Configure GitHub Actions CI",
+      "type": "task",
+      "priority": 2,
+      "description": "Set up continuous integration:\n- Create .github/workflows/ci.yml\n- Run build, test, and lint on push/PR\n- Test on Go 1.21, 1.22\n- Add status badge to README",
+      "depends_on": ["testing-setup", "linting-setup"]
+    },
+    {
+      "id": "first-feature",
+      "title": "Implement first working feature",
+      "type": "task",
+      "priority": 1,
+      "description": "Build the first functional feature:\n- Implement core functionality in internal/ or pkg/\n- Wire up in cmd/{{PROJECT_SLUG}}/main.go\n- Write tests for the feature\n- Ensure build and tests pass",
+      "depends_on": ["testing-setup"]
+    }
+  ]
+}

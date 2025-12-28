@@ -1,0 +1,72 @@
+{
+  "$schema": "https://beads.dev/schemas/initial-issues.json",
+  "version": "1.0",
+  "description": "TypeScript project setup issues",
+  "variables": {
+    "PROJECT_NAME": {
+      "description": "Human-readable project name",
+      "required": true
+    },
+    "PROJECT_SLUG": {
+      "description": "npm package name (lowercase, hyphens)",
+      "required": true
+    }
+  },
+  "issues": [
+    {
+      "id": "setup-epic",
+      "title": "{{PROJECT_NAME}} Initial Setup",
+      "type": "epic",
+      "priority": 1,
+      "description": "Complete TypeScript project setup with npm, testing, and linting."
+    },
+    {
+      "id": "npm-init",
+      "title": "Initialize npm project",
+      "type": "task",
+      "priority": 1,
+      "description": "Set up npm project:\n- Run `npm install` to install dependencies\n- Verify Node.js version >= 18\n- Confirm package.json is correct\n- Test that `npm run build` works",
+      "depends_on": ["setup-epic"]
+    },
+    {
+      "id": "project-structure",
+      "title": "Create TypeScript source structure",
+      "type": "task",
+      "priority": 1,
+      "description": "Create standard TypeScript layout:\n- src/index.ts (main entry point)\n- src/lib/ (library code)\n- tests/ (test files)\n- Verify tsconfig.json paths are correct",
+      "depends_on": ["setup-epic"]
+    },
+    {
+      "id": "vitest-setup",
+      "title": "Configure Vitest testing",
+      "type": "task",
+      "priority": 1,
+      "description": "Set up Vitest for testing:\n- Create vitest.config.ts if needed\n- Create first test in tests/index.test.ts\n- Run `npm test` and confirm it passes\n- Configure coverage reporting",
+      "depends_on": ["npm-init", "project-structure"]
+    },
+    {
+      "id": "eslint-setup",
+      "title": "Configure ESLint and Prettier",
+      "type": "task",
+      "priority": 2,
+      "description": "Set up code quality tools:\n- Create .eslintrc.json with TypeScript rules\n- Create .prettierrc for formatting\n- Run `npm run lint` and fix any issues\n- Add editor config for consistency",
+      "depends_on": ["npm-init"]
+    },
+    {
+      "id": "ci-pipeline",
+      "title": "Configure GitHub Actions CI",
+      "type": "task",
+      "priority": 2,
+      "description": "Set up continuous integration:\n- Create .github/workflows/ci.yml\n- Run build, test, and lint on push/PR\n- Test on Node.js 18, 20, 22\n- Add status badge to README",
+      "depends_on": ["vitest-setup", "eslint-setup"]
+    },
+    {
+      "id": "first-feature",
+      "title": "Implement first working feature",
+      "type": "task",
+      "priority": 1,
+      "description": "Build the first functional feature:\n- Implement core functionality in src/\n- Export from src/index.ts\n- Write tests for the feature\n- Ensure build and tests pass",
+      "depends_on": ["vitest-setup"]
+    }
+  ]
+}

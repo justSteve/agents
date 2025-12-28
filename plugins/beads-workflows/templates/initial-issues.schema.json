@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://beads.dev/schemas/initial-issues.json",
+  "title": "Beads Initial Issues Template",
+  "description": "Schema for defining initial issues to create when scaffolding a new beads-enabled project",
+  "type": "object",
+  "required": ["version", "issues"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+$",
+      "description": "Schema version (e.g., '1.0')"
+    },
+    "description": {
+      "type": "string",
+      "description": "Human-readable description of this issue set"
+    },
+    "variables": {
+      "type": "object",
+      "description": "Template variables that can be used in issue titles/descriptions",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "description": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean",
+            "default": false
+          },
+          "default": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "issues": {
+      "type": "array",
+      "description": "List of issues to create",
+      "items": {
+        "type": "object",
+        "required": ["id", "title", "type"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$",
+            "description": "Local identifier for referencing in depends_on (not the final beads ID)"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "description": "Issue title (supports {{VARIABLE}} substitution)"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["epic", "feature", "task", "bug"],
+            "description": "Issue type"
+          },
+          "priority": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4,
+            "default": 2,
+            "description": "Priority level (1=highest, 4=lowest)"
+          },
+          "description": {
+            "type": "string",
+            "description": "Detailed issue description (supports {{VARIABLE}} substitution)"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of local issue IDs this issue depends on"
+          },
+          "labels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional labels to apply to the issue"
+          }
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "version": "1.0",
+      "description": "Example project setup",
+      "variables": {
+        "PROJECT_NAME": {
+          "description": "Project name",
+          "required": true
+        }
+      },
+      "issues": [
+        {
+          "id": "setup",
+          "title": "{{PROJECT_NAME}} Initial Setup",
+          "type": "epic",
+          "priority": 1,
+          "description": "Complete initial project setup"
+        },
+        {
+          "id": "dev-env",
+          "title": "Configure development environment",
+          "type": "task",
+          "priority": 1,
+          "depends_on": ["setup"]
+        }
+      ]
+    }
+  ]
+}

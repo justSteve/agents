@@ -1,0 +1,72 @@
+{
+  "$schema": "https://beads.dev/schemas/initial-issues.json",
+  "version": "1.0",
+  "description": "Python project setup issues",
+  "variables": {
+    "PROJECT_NAME": {
+      "description": "Human-readable project name",
+      "required": true
+    },
+    "PROJECT_SLUG": {
+      "description": "Python package name (lowercase, underscores)",
+      "required": true
+    }
+  },
+  "issues": [
+    {
+      "id": "setup-epic",
+      "title": "{{PROJECT_NAME}} Initial Setup",
+      "type": "epic",
+      "priority": 1,
+      "description": "Complete Python project setup with virtual environment, testing, and linting."
+    },
+    {
+      "id": "venv-setup",
+      "title": "Configure Python virtual environment",
+      "type": "task",
+      "priority": 1,
+      "description": "Set up Python development environment:\n- Create virtual environment with uv or venv\n- Install project in editable mode: `uv pip install -e '.[dev]'`\n- Verify Python version >= 3.10\n- Document activation command in README",
+      "depends_on": ["setup-epic"]
+    },
+    {
+      "id": "project-structure",
+      "title": "Create Python package structure",
+      "type": "task",
+      "priority": 1,
+      "description": "Create standard Python package layout:\n- src/{{PROJECT_SLUG}}/__init__.py\n- src/{{PROJECT_SLUG}}/main.py\n- tests/__init__.py\n- tests/test_main.py\n- Verify imports work correctly",
+      "depends_on": ["setup-epic"]
+    },
+    {
+      "id": "pytest-setup",
+      "title": "Configure pytest testing",
+      "type": "task",
+      "priority": 1,
+      "description": "Set up pytest for testing:\n- Verify pytest configuration in pyproject.toml\n- Create first passing test in tests/test_main.py\n- Run `pytest` and confirm it passes\n- Add pytest-cov for coverage reports",
+      "depends_on": ["venv-setup", "project-structure"]
+    },
+    {
+      "id": "linting-setup",
+      "title": "Configure linting and formatting",
+      "type": "task",
+      "priority": 2,
+      "description": "Set up code quality tools:\n- Configure ruff for linting and formatting\n- Configure mypy for type checking\n- Run `ruff check .` and fix any issues\n- Run `mypy src/` and fix any issues\n- Add pre-commit hooks (optional)",
+      "depends_on": ["venv-setup"]
+    },
+    {
+      "id": "ci-pipeline",
+      "title": "Configure GitHub Actions CI",
+      "type": "task",
+      "priority": 2,
+      "description": "Set up continuous integration:\n- Create .github/workflows/ci.yml\n- Run tests on push and PR\n- Run linting (ruff) and type checking (mypy)\n- Test on Python 3.10, 3.11, 3.12\n- Add status badge to README",
+      "depends_on": ["pytest-setup", "linting-setup"]
+    },
+    {
+      "id": "first-feature",
+      "title": "Implement first working feature",
+      "type": "task",
+      "priority": 1,
+      "description": "Build the first functional feature:\n- Implement core functionality in src/{{PROJECT_SLUG}}/\n- Write tests for the feature\n- Ensure all tests pass\n- Update documentation",
+      "depends_on": ["pytest-setup"]
+    }
+  ]
+}
