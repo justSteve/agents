@@ -1,28 +1,100 @@
 # Project Init
 
-Initialize a new beads-native project with proper structure, templates, and initial issues.
+Initialize a beads-native project with proper structure, templates, and initial issues.
+
+Supports both **greenfield** (new projects) and **brownfield** (existing projects) scenarios.
 
 ## Overview
 
 This command scaffolds a complete project setup:
-1. Directory setup (create/verify, git init)
-2. Beads initialization (bd init, hooks, config)
-3. Template application (files, CLAUDE.md)
-4. Initial issues (setup epic with tasks)
-5. First session (optional beads-session-start)
+1. Mode detection (greenfield vs brownfield)
+2. Directory setup (create/verify, git init)
+3. Beads initialization (bd init, hooks, config)
+4. Template application (files, CLAUDE.md)
+5. Initial issues (setup epic with tasks)
+6. First session (optional beads-session-start)
 
 ## Arguments
 
-**Required**:
+**Required** (greenfield only):
 - `<project-name>` - Name for the project (used for directory and module)
 
+**Brownfield Flags**:
+- `--existing` or `-e` - Initialize beads in current directory (brownfield mode)
+- `--beads-only` - Only add beads, skip all template files
+- `--no-overwrite` - Never overwrite existing files (safest for brownfield)
+
 **Optional**:
-- `--prefix <prefix>` - Issue ID prefix (default: derived from project name)
-- `--template <type>` - Project template: standard, python, typescript, go (default: standard)
+- `--prefix <prefix>` - Issue ID prefix (default: derived from project/directory name)
+- `--template <type>` - Project template: standard, python, typescript, go (default: auto-detect or standard)
 - `--agents <list>` - Comma-separated agent plugins to enable (default: beads-workflows)
 - `--path <dir>` - Parent directory for project (default: current directory)
 - `--description <text>` - Project description for README and CLAUDE.md
 - `--no-session` - Skip running beads-session-start after setup
+- `--no-issues` - Skip creating initial issues (useful for brownfield with existing backlog)
+
+## Mode Detection
+
+The command automatically detects greenfield vs brownfield based on arguments and context.
+
+### Greenfield Mode (New Project)
+```bash
+/project-init my-new-app --template python
+```
+- Creates new directory
+- Full template application
+- Creates all files from scratch
+
+### Brownfield Mode (Existing Project)
+```bash
+/project-init --existing
+/project-init -e
+/project-init . --existing
+```
+- Works in current directory
+- Auto-detects project type
+- Preserves existing files
+- Appends to .gitignore and CLAUDE.md
+
+### Mode Selection Logic
+```
+if --existing flag OR project-name is "."
+  → Brownfield mode
+else
+  → Greenfield mode
+```
+
+## Project Type Detection (Brownfield)
+
+When running in brownfield mode without explicit `--template`, detect project type from existing files:
+
+| File Found | Detected Type |
+|------------|---------------|
+| `package.json` | typescript |
+| `pyproject.toml` | python |
+| `setup.py` | python |
+| `go.mod` | go |
+| `Cargo.toml` | rust (future) |
+| None of above | standard |
+
+**Detection Command**:
+```bash
+# Check for project markers
+if [ -f "package.json" ]; then
+  PROJECT_TYPE="typescript"
+elif [ -f "pyproject.toml" ] || [ -f "setup.py" ]; then
+  PROJECT_TYPE="python"
+elif [ -f "go.mod" ]; then
+  PROJECT_TYPE="go"
+else
+  PROJECT_TYPE="standard"
+fi
+```
+
+**Output**:
+```
+✓ Detected project type: python (from pyproject.toml)
+```
 
 ## Phase 1: Directory Setup
 
@@ -131,6 +203,100 @@ git commit -m "chore: Initialize project with beads"
 ✓ Initial commit created
 ```
 
+### Brownfield File Handling
+
+In brownfield mode, files are handled differently to preserve existing work:
+
+| File Type | Action | Details |
+|-----------|--------|---------|
+| `.gitignore` | **Append** | Add beads patterns if not present |
+| `CLAUDE.md` | **Merge** | Append beads section to existing |
+| `README.md` | **Skip** | Never overwrite existing README |
+| `pyproject.toml` | **Skip** | Preserve existing config |
+| `package.json` | **Skip** | Preserve existing config |
+| `go.mod` | **Skip** | Preserve existing config |
+| `.beads/` | **Create** | Always create (core functionality) |
+
+**Append Logic for .gitignore**:
+```bash
+# Check if beads patterns already exist
+if ! grep -q "\.beads/beads\.db" .gitignore 2>/dev/null; then
+  echo "" >> .gitignore
+  echo "# Beads issue tracking" >> .gitignore
+  echo ".beads/beads.db" >> .gitignore
+  echo ".beads/beads.db-*" >> .gitignore
+fi
+```
+
+**Output (brownfield)**:
+```
+✓ Appended beads patterns to .gitignore
+✓ Merged beads section into CLAUDE.md
+⊘ Skipped README.md (exists)
+⊘ Skipped pyproject.toml (exists)
+```
+
+### CLAUDE.md Merge Logic
+
+When a `.claude/CLAUDE.md` or `CLAUDE.md` already exists, merge rather than replace:
+
+**Detection**:
+```bash
+# Check for existing CLAUDE.md
+if [ -f ".claude/CLAUDE.md" ]; then
+  CLAUDE_PATH=".claude/CLAUDE.md"
+elif [ -f "CLAUDE.md" ]; then
+  CLAUDE_PATH="CLAUDE.md"
+else
+  CLAUDE_PATH=""  # Will create new
+fi
+```
+
+**Merge Strategy**:
+1. Read existing CLAUDE.md content
+2. Check if beads section already exists (look for `## Beads Workflow` or `## Issue Tracking`)
+3. If not present, append beads section at end
+4. Preserve all existing content
+
+**Beads Section Template** (appended to existing):
+```markdown
+
+## Beads Workflow Integration
+
+This project uses **Beads** for AI-native issue tracking.
+
+### Essential Commands
+
+```bash
+bd ready                    # Show unblocked issues
+bd list --status=open       # All open issues
+bd update <id> --status=in_progress  # Claim work
+bd close <id>               # Complete work
+bd sync                     # Sync with git
+```
+
+### Session Protocol
+
+Before completing work:
+```bash
+git status && git add <files> && bd sync && git commit -m "..." && git push
+```
+
+See: [Beads Documentation](https://github.com/steveyegge/beads)
+```
+
+**Output**:
+```
+✓ Found existing CLAUDE.md at ./CLAUDE.md
+✓ Appended beads workflow section
+```
+
+**With --beads-only flag**:
+```
+✓ Beads initialized (--beads-only mode)
+⊘ Skipped all template files
+```
+
 ## Phase 4: Initial Issues
 
 Create setup epic and child tasks from template.
@@ -219,6 +385,47 @@ Run 'bd update <id> --status in_progress' to claim an issue.
 4. [P2] api-bbb: Add type checking
 ```
 
+## Brownfield Example
+
+```bash
+# Add beads to an existing TypeScript project
+cd ~/projects/my-existing-app
+/project-init --existing --no-issues
+
+# Output:
+✓ Brownfield mode: existing project detected
+✓ Detected project type: typescript (from package.json)
+✓ Git repository found
+✓ Beads initialized with prefix: mea
+✓ Git hooks installed
+✓ Agent plugins enabled: beads-workflows
+✓ Appended beads patterns to .gitignore
+✓ Found existing CLAUDE.md at ./CLAUDE.md
+✓ Appended beads workflow section
+⊘ Skipped README.md (exists)
+⊘ Skipped package.json (exists)
+⊘ Skipped tsconfig.json (exists)
+⊘ Skipped initial issues (--no-issues)
+✓ Project ready for beads!
+
+Next steps:
+  bd create --title="First beads issue" --type=task
+  bd ready
+```
+
+```bash
+# Minimal beads-only setup (preserves everything)
+/project-init -e --beads-only
+
+# Output:
+✓ Brownfield mode: existing project detected
+✓ Beads initialized with prefix: proj
+✓ Git hooks installed
+✓ Beads initialized (--beads-only mode)
+⊘ Skipped all template files
+✓ Project ready for beads!
+```
+
 ## Error Handling
 
 | Error | Resolution |
@@ -227,8 +434,14 @@ Run 'bd update <id> --status in_progress' to claim an issue.
 | Git init fails | Check permissions, directory state |
 | Template not found | Default to 'standard' with warning |
 | bd init fails | Check beads installation |
+| Not a git repo (brownfield) | Run `git init` first or let command initialize |
+| CLAUDE.md has beads section | Skip merge, report already configured |
+| --existing without git repo | Initialize git automatically with confirmation |
+| Conflicting --beads-only with --template | Warn: --beads-only ignores template files |
 
 ## Files Created
+
+### Greenfield (New Project)
 
 After running `/project-init my-app --template python`:
 
@@ -246,6 +459,28 @@ my-app/
 ├── .gitignore
 ├── pyproject.toml
 └── README.md
+```
+
+### Brownfield (Existing Project)
+
+After running `/project-init --existing` in an existing project:
+
+```
+existing-project/
+├── .beads/                    # NEW - Created
+│   ├── beads.db
+│   ├── config.yaml
+│   └── issues.jsonl
+├── .git/
+│   └── hooks/
+│       └── post-commit        # NEW - Beads hook added
+├── .gitignore                 # MODIFIED - Beads patterns appended
+├── CLAUDE.md                  # MODIFIED - Beads section appended
+├── package.json               # UNCHANGED
+├── tsconfig.json              # UNCHANGED
+├── src/                       # UNCHANGED
+│   └── ...
+└── README.md                  # UNCHANGED
 ```
 
 ## Integration with beads-workflows
