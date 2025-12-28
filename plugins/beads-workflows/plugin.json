@@ -27,7 +27,8 @@
   "agents": [
     "./agents/beads-disciplinarian.md",
     "./agents/beads-workflow-orchestrator.md",
-    "./agents/beads-issue-reviewer.md"
+    "./agents/beads-issue-reviewer.md",
+    "./agents/beads-prompt-integrator.md"
   ],
   "skills": [
     "./skills/session-rituals",
