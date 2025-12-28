@@ -346,6 +346,340 @@ bd update <id> --notes="WIP status..."
 **Golden Rule**:
 > Never claim completion without running the checklist and showing the outputs.
 
+## Pattern Enforcement Examples
+
+Use these examples to detect and correct session ritual violations.
+
+### Enforcement Example 1: Premature Completion Claim
+
+**Agent says**: "I've fixed the bug. Done!"
+
+**Detection**: Completion claimed without showing checklist execution.
+
+**Enforcement dialogue**:
+```
+⚠️ PREMATURE COMPLETION CLAIM
+
+You said "Done!" but haven't shown the session close checklist.
+
+The "Never Say Done" rule: Show your work!
+
+Required before claiming completion:
+┌──────────────────────────────────────────────────────┐
+│  SESSION CLOSE CHECKLIST                             │
+├──────────────────────────────────────────────────────┤
+│  [ ] git status         → Show what changed          │
+│  [ ] git add            → Stage the changes          │
+│  [ ] bd sync            → Pre-commit sync            │
+│  [ ] git commit         → Create commit              │
+│  [ ] bd sync            → Post-commit sync           │
+│  [ ] git push           → Push to remote             │
+│  [ ] bd close <id>      → Close the issue            │
+└──────────────────────────────────────────────────────┘
+
+Run the checklist now and show outputs:
+
+git status
+# Expected: Shows modified files from your work
+
+git add <files>
+# Expected: Files staged
+
+bd sync
+# Expected: Sync complete
+
+git commit -m "fix(auth): resolve timeout issue
+
+Resolves: auth-login-fix"
+# Expected: Commit created with hash
+
+bd sync
+# Expected: Commit linked to issue
+
+git push
+# Expected: Pushed to origin
+
+bd close auth-login-fix
+# Expected: Issue closed
+
+ONLY THEN can you say "Done!"
+```
+
+### Enforcement Example 2: Multiple Issues In Progress
+
+**Agent runs**:
+```
+bd update issue-1 --status=in_progress
+bd update issue-2 --status=in_progress
+```
+
+**Detection**: Single-issue discipline violation.
+
+**Enforcement dialogue**:
+```
+⚠️ SINGLE-ISSUE DISCIPLINE VIOLATION
+
+You have claimed multiple issues:
+- issue-1: in_progress
+- issue-2: in_progress
+
+Beads discipline: ONE issue at a time!
+
+Problems with multiple in_progress:
+- Context switching overhead
+- Unclear which issue changes belong to
+- Inaccurate time tracking
+- Risk of orphaned work
+
+Resolution options:
+
+Option 1: Keep issue-1, release issue-2
+bd update issue-2 --status=open
+
+Option 2: Keep issue-2, release issue-1
+bd update issue-1 --status=open
+
+Option 3: If issue-2 was discovered while working on issue-1
+bd update issue-2 --status=open
+bd dep add issue-2 issue-1 --type discovered-from
+# Continue working on issue-1 only
+
+Choose one issue and focus on it completely.
+```
+
+### Enforcement Example 3: Skipping bd sync
+
+**Agent runs**:
+```
+git add .
+git commit -m "fix something"
+git push
+bd close issue-id
+```
+
+**Detection**: Missing bd sync before and after commit.
+
+**Enforcement dialogue**:
+```
+⚠️ BD SYNC SKIPPED
+
+Your session close sequence is missing bd sync calls:
+
+What you did:
+1. git add .          ✓
+2. git commit         ✓
+3. git push           ✓
+4. bd close           ✓
+
+What you missed:
+- bd sync BEFORE commit (captures in-progress state)
+- bd sync AFTER commit (links commit hash to issue)
+
+Why bd sync matters:
+- Pre-commit: Validates issue state, exports to JSONL
+- Post-commit: Links git commit hash to beads issue
+- Without sync: Issue history is incomplete
+
+Correct sequence:
+git add .
+bd sync              ← BEFORE commit
+git commit -m "..."
+bd sync              ← AFTER commit
+git push
+bd close issue-id
+bd sync              ← AFTER close
+
+Always sync: before commit, after commit, after close.
+```
+
+### Enforcement Example 4: Closing Without Verification
+
+**Agent runs**: `bd close issue-id` immediately after making changes.
+
+**Detection**: No verification that work is complete.
+
+**Enforcement dialogue**:
+```
+⚠️ CLOSING WITHOUT VERIFICATION
+
+You closed the issue without verifying completion.
+
+Before bd close, you must verify:
+
+1. ACCEPTANCE CRITERIA MET
+   bd show issue-id
+   # Review each acceptance criterion
+   # All boxes should be checkable
+
+2. TESTS PASSING (if applicable)
+   npm test  # or your test command
+   # All tests should pass
+
+3. NO UNINTENDED SIDE EFFECTS
+   git diff HEAD~1
+   # Review changes are intentional
+   # No debug code left behind
+
+4. CHANGES COMMITTED AND PUSHED
+   git status
+   # Should show: "nothing to commit, working tree clean"
+   git log origin/main..HEAD
+   # Should show: 0 commits (already pushed)
+
+Only after all verifications pass:
+bd close issue-id --reason="All criteria met, tests pass"
+```
+
+### Enforcement Example 5: Orphaned In-Progress Issue
+
+**Agent starts new session and finds**:
+```
+bd list --status in_progress
+# old-issue-from-yesterday: in_progress
+```
+
+**Detection**: Previous session left issue in_progress.
+
+**Enforcement dialogue**:
+```
+⚠️ ORPHANED IN-PROGRESS ISSUE FOUND
+
+Previous session left work incomplete:
+- Issue: old-issue-from-yesterday
+- Status: in_progress
+- Last updated: yesterday
+
+This violates clean handoff principles.
+
+Resolution required before starting new work:
+
+Option 1: Resume the work
+bd show old-issue-from-yesterday
+# Review what was done
+# Continue and complete it
+
+Option 2: Work was actually completed
+git log --oneline -5
+# Check if work was committed
+bd close old-issue-from-yesterday --reason="Completed in previous session"
+
+Option 3: Work was abandoned
+bd update old-issue-from-yesterday --status=open \
+  --notes="Abandoned in previous session. Partial work in commit abc123."
+# Now it's available for future sessions
+
+Option 4: Work is blocked
+bd update old-issue-from-yesterday --status=blocked \
+  --reason="Waiting on external dependency X"
+
+Choose an option to clean up before claiming new work.
+```
+
+### Enforcement Example 6: Verbal Completion Without Evidence
+
+**Agent says**: "I've completed all the tasks and everything is working."
+
+**Detection**: Completion claimed without command output evidence.
+
+**Enforcement dialogue**:
+```
+⚠️ VERBAL COMPLETION WITHOUT EVIDENCE
+
+You claimed completion but showed no evidence.
+
+The "Show Your Work" rule requires command outputs:
+
+❌ What you said:
+"I've completed all the tasks and everything is working."
+
+✅ What you should show:
+
+$ git status
+On branch main
+nothing to commit, working tree clean
+
+$ git log -1 --oneline
+abc123 fix(auth): resolve timeout issue
+
+$ bd show auth-login-fix
+Status: closed
+Closed: 2024-01-15T14:30:00Z
+Commits: abc123
+
+$ npm test
+All 47 tests passed
+
+Completion claim accepted only with evidence.
+Run the commands and show the outputs.
+```
+
+### Session Ritual Verification Commands
+
+Use these commands to verify session state:
+
+**Start of Session**:
+```bash
+# Check for orphaned work
+bd list --status in_progress
+# Expected: 0 issues (or 1 you're resuming)
+
+# Find available work
+bd ready
+# Expected: List of unblocked issues
+
+# Claim one issue
+bd update <id> --status in_progress
+bd sync
+```
+
+**End of Session**:
+```bash
+# Verify git state
+git status
+# Expected: All work staged or committed
+
+# Verify push state
+git log origin/main..HEAD
+# Expected: 0 commits (all pushed)
+
+# Verify beads state
+bd list --status in_progress
+# Expected: 0 issues (all closed or released)
+```
+
+### Enforcement Summary Checklist
+
+```
+┌────────────────────────────────────────────────────────────┐
+│              SESSION RITUAL ENFORCEMENT                    │
+├────────────────────────────────────────────────────────────┤
+│                                                            │
+│  SESSION START                                             │
+│  [ ] bd ready              → Find available work           │
+│  [ ] bd show <id>          → Review before claiming        │
+│  [ ] Only ONE in_progress  → Single-issue discipline       │
+│  [ ] bd sync               → Sync state                    │
+│                                                            │
+│  SESSION END (MANDATORY - NEVER SKIP)                      │
+│  [ ] git status            → Verify all work captured      │
+│  [ ] git add               → Stage changes                 │
+│  [ ] bd sync               → Pre-commit sync               │
+│  [ ] git commit            → Create commit                 │
+│  [ ] bd sync               → Post-commit sync              │
+│  [ ] git push              → Push to remote                │
+│  [ ] bd close              → Close issue (if complete)     │
+│  [ ] bd sync               → Final sync                    │
+│                                                            │
+│  COMPLETION CLAIM                                          │
+│  [ ] Show command outputs  → Evidence required             │
+│  [ ] Verify clean state    → git status shows clean        │
+│  [ ] No orphaned work      → bd list shows 0 in_progress   │
+│                                                            │
+└────────────────────────────────────────────────────────────┘
+
+"Done" = All boxes checked with evidence shown
+```
+
 ## Summary
 
 **Core principle**: Session discipline enables accurate tracking and clean handoffs.

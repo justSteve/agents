@@ -461,6 +461,187 @@ bd dep add logout-endpoint user-model --type blocks
 ```
 </details>
 
+## Pattern Enforcement Examples
+
+Use these examples to detect and correct temporal thinking patterns.
+
+### Enforcement Example 1: Detect Temporal Language
+
+**User says**: "I need to create the database first, then the API."
+
+**Detection**: Words "first" and "then" trigger temporal thinking warning.
+
+**Enforcement dialogue**:
+```
+⚠️ TEMPORAL LANGUAGE DETECTED
+
+You said: "first...then"
+This triggers temporal thinking which inverts dependencies!
+
+Let me rephrase as requirements:
+- "The API NEEDS the database"
+- Therefore: bd dep add api database
+
+Verification question:
+"Can the API be started without the database complete?"
+- If NO → correct direction (API depends on database)
+- If YES → wrong direction, reconsider
+
+Correct command: bd dep add api database --type blocks
+```
+
+### Enforcement Example 2: Correct Phase Numbering
+
+**User says**: "Phase 1 is design, Phase 2 is implementation, Phase 3 is testing."
+
+**Detection**: "Phase 1/2/3" numbering triggers temporal thinking warning.
+
+**Enforcement dialogue**:
+```
+⚠️ PHASE NUMBERING DETECTED
+
+You used: "Phase 1, Phase 2, Phase 3"
+This temporal naming inverts dependency thinking!
+
+Translate to requirements:
+- "Implementation NEEDS design" → bd dep add implementation design
+- "Testing NEEDS implementation" → bd dep add testing implementation
+
+NOT:
+- bd dep add design implementation ❌ (says design needs implementation - backwards!)
+
+Correct commands:
+bd dep add implementation design --type blocks
+bd dep add testing implementation --type blocks
+
+Verification:
+bd blocked
+# Expected: implementation blocked by design, testing blocked by implementation
+```
+
+### Enforcement Example 3: Correct "Before/After" Language
+
+**User says**: "We need to finish auth before we can do the dashboard."
+
+**Detection**: "before" triggers temporal thinking warning.
+
+**Enforcement dialogue**:
+```
+⚠️ "BEFORE" LANGUAGE DETECTED
+
+You said: "finish X before Y"
+Temporal: "auth before dashboard"
+Requirement: "dashboard NEEDS auth"
+
+Translate:
+- Ask: "What does dashboard NEED?"
+- Answer: "Dashboard needs auth"
+- Command: bd dep add dashboard auth
+
+Correct command: bd dep add dashboard auth --type blocks
+
+Verification:
+bd show dashboard
+# Should show: "Blocked by: auth"
+```
+
+### Enforcement Example 4: Correct Epic Decomposition
+
+**User says**: "The epic breaks down into: Step 1 user model, Step 2 login, Step 3 registration."
+
+**Detection**: "Step 1/2/3" numbering triggers warning.
+
+**Enforcement dialogue**:
+```
+⚠️ STEP NUMBERING DETECTED
+
+You used: "Step 1, Step 2, Step 3"
+This suggests temporal ordering, but we need requirement thinking.
+
+Questions to ask:
+1. "Does login NEED user model?" → YES → bd dep add login user-model
+2. "Does registration NEED user model?" → YES → bd dep add registration user-model
+3. "Does registration NEED login?" → NO → no dependency
+
+Also add parent-child for epic structure:
+bd dep add user-model epic --type parent-child
+bd dep add login epic --type parent-child
+bd dep add registration epic --type parent-child
+
+Technical blockers:
+bd dep add login user-model --type blocks
+bd dep add registration user-model --type blocks
+
+Verification:
+bd blocked
+# login and registration blocked by user-model
+# user-model is NOT blocked (ready to start)
+```
+
+### Enforcement Example 5: Flip Inverted Dependency
+
+**User runs**: `bd dep add database api`
+
+**Detection**: Likely inverted - databases don't usually need APIs.
+
+**Enforcement dialogue**:
+```
+⚠️ POSSIBLE INVERTED DEPENDENCY
+
+You ran: bd dep add database api
+This says: "database NEEDS api"
+
+Is this correct? Usually APIs need databases, not the other way around.
+
+Verification question:
+"Can the database be created without the API complete?"
+- If YES → dependency is inverted (database doesn't need API)
+- If NO → unusual case, proceed with caution
+
+Likely correct command:
+bd dep add api database --type blocks
+
+To fix if already added:
+bd dep remove database api
+bd dep add api database --type blocks
+
+Verification:
+bd blocked
+# api should be blocked by database
+# database should be ready (unblocked)
+```
+
+### Enforcement Summary Table
+
+| Trigger Pattern | Detection | Correction |
+|-----------------|-----------|------------|
+| "first X, then Y" | Temporal language | "Y needs X" → `bd dep add Y X` |
+| "X before Y" | Temporal language | "Y needs X" → `bd dep add Y X` |
+| "Phase 1, Phase 2" | Phase numbering | Rename functionally, use requirement thinking |
+| "Step 1, Step 2" | Step numbering | Ask "what NEEDS what?" for each |
+| "X → Y" (arrow) | Arrow direction | Flip: "Y ← X" → `bd dep add Y X` |
+| `bd dep add X Y` then confusion | Possible inversion | Ask "Can X start without Y?" |
+
+### Enforcement Verification Commands
+
+After any dependency operation, verify with:
+
+```bash
+# See all blocked issues
+bd blocked
+
+# Check specific issue dependencies
+bd show <issue-id>
+
+# View full dependency tree
+bd dep tree <issue-id>
+```
+
+**What to look for**:
+- Blocked issues should be WAITING for their prerequisites
+- Blocking issues should be the ones that must complete FIRST
+- If it looks backwards, you used temporal thinking!
+
 ## Summary
 
 **Core principle**: Think in requirements, not sequences.

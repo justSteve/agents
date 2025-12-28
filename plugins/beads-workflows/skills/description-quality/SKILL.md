@@ -482,6 +482,296 @@ Desired: [What should happen]
 **Golden rule**:
 > Write descriptions for your future self who has forgotten all context.
 
+## Pattern Enforcement Examples
+
+Use these examples to detect and correct description quality issues.
+
+### Enforcement Example 1: Missing Why/What/How Structure
+
+**User submits**:
+```
+Title: Fix login bug
+Description: The login is broken
+```
+
+**Detection**: Description lacks structure - no Why, What, or How.
+
+**Enforcement dialogue**:
+```
+⚠️ DESCRIPTION QUALITY: FAIL
+
+Missing required elements:
+- [ ] WHY: No context (why does this matter?)
+- [ ] WHAT: No problem statement (what's broken specifically?)
+- [ ] HOW: No acceptance criteria (how do we verify it's fixed?)
+
+Current description: "The login is broken"
+Length: 19 characters (minimum: 50 for bugs, recommended: 100+)
+
+Required structure:
+## Context (WHY)
+[What triggered this? Who is affected? Why does it matter?]
+
+## Problem (WHAT)
+Current: [What's happening now]
+Expected: [What should happen]
+
+## Acceptance Criteria (HOW to verify)
+- [ ] [Specific, testable criterion]
+
+Rewrite the description before creating this issue.
+```
+
+**Corrected version**:
+```markdown
+## Context
+Users on Safari 16+ cannot log in. Affects ~15% of user base.
+Reported by 3 customers this week.
+
+## Problem
+Current: Login fails with "Invalid credentials" on Safari 16+
+Expected: Login works on all supported browsers
+
+## Acceptance Criteria
+- [ ] Login succeeds on Safari 16, 17
+- [ ] Login still works on Chrome, Firefox, Edge
+- [ ] Error includes browser info for debugging
+```
+
+### Enforcement Example 2: Vague Title Detection
+
+**User submits**:
+```
+Title: Update code
+```
+
+**Detection**: Title matches vague pattern list.
+
+**Enforcement dialogue**:
+```
+⚠️ TITLE QUALITY: FAIL
+
+Title "Update code" is too vague.
+
+Vague patterns detected:
+- Single verb without object ❌
+- No specificity about WHAT is being updated ❌
+
+The title should answer: "What specific thing is changing?"
+
+Bad titles:
+- "Fix bug" → What bug?
+- "Update code" → What code? Why?
+- "Refactor" → Refactor what?
+
+Good titles:
+- "Fix null pointer in user lookup when email missing"
+- "Update auth token expiry from 1h to 24h"
+- "Refactor UserService into auth and profile modules"
+
+Rewrite the title to be specific and actionable.
+```
+
+### Enforcement Example 3: No Acceptance Criteria
+
+**User submits**:
+```
+Title: Improve search performance
+Description: Search is slow, needs to be faster.
+```
+
+**Detection**: No acceptance criteria - cannot verify completion.
+
+**Enforcement dialogue**:
+```
+⚠️ ACCEPTANCE CRITERIA: MISSING
+
+Description has no verifiable completion criteria.
+
+Current: "Search is slow, needs to be faster"
+Problem: How do we know when it's "fast enough"?
+
+Without criteria, you'll have:
+- Endless scope creep
+- "Is this done?" confusion
+- No way to verify success
+
+Add measurable acceptance criteria:
+- [ ] Search returns results in < 200ms for queries up to 100 chars
+- [ ] Search handles 1000 concurrent requests
+- [ ] Memory usage stays below 512MB during search
+- [ ] 95th percentile latency < 500ms
+
+Tip: If you can't measure it, you can't verify it.
+```
+
+### Enforcement Example 4: Scope Creep in Single Issue
+
+**User submits**:
+```
+Title: Fix login and update styles and refactor auth
+Description: Need to fix the login bug, also the header needs
+new styles, and while we're at it let's refactor the auth module.
+```
+
+**Detection**: Multiple unrelated tasks in one issue.
+
+**Enforcement dialogue**:
+```
+⚠️ SCOPE VIOLATION: MULTIPLE CONCERNS
+
+This issue contains 3 unrelated tasks:
+1. Fix login bug
+2. Update header styles
+3. Refactor auth module
+
+Beads discipline: One issue = One concern
+
+Split into separate issues:
+bd create "Fix login credential validation bug" -t bug
+bd create "Update header styles to match brand guidelines" -t task
+bd create "Refactor auth module into focused services" -t task
+
+Benefits:
+- Clear ownership per issue
+- Independent verification
+- Accurate progress tracking
+- No blocked work from unrelated delays
+
+If tasks are related, use dependencies:
+bd dep add refactor-auth login-fix --type related
+```
+
+### Enforcement Example 5: Implementation Prescription vs Outcome
+
+**User submits**:
+```
+Title: Use Redis for session caching
+Description: Implement session caching using Redis with ioredis
+library, use a HashMap data structure with TTL of 3600 seconds.
+```
+
+**Detection**: Describes HOW instead of WHY/WHAT.
+
+**Enforcement dialogue**:
+```
+⚠️ DESCRIPTION ANTI-PATTERN: IMPLEMENTATION PRESCRIPTION
+
+Description dictates implementation instead of outcomes.
+
+Problem: You've specified:
+- Technology: Redis
+- Library: ioredis
+- Data structure: HashMap
+- TTL: 3600 seconds
+
+But you haven't explained:
+- WHY: What problem does this solve?
+- WHAT: What outcome do we need?
+- CRITERIA: How do we verify success?
+
+Better approach - describe the problem:
+
+## Context
+User session lookups are slow (200ms average), causing
+lag in authenticated API requests.
+
+## Problem
+Current: Session lookups take 200ms
+Desired: Session lookups complete in < 10ms
+
+## Acceptance Criteria
+- [ ] Session lookup < 10ms (p95)
+- [ ] Sessions persist across server restarts
+- [ ] Sessions expire after 1 hour of inactivity
+
+## Technical Notes
+- Consider caching solutions (Redis available in infra)
+- Must integrate with existing auth middleware
+
+Let the implementer choose the best approach!
+```
+
+### Enforcement Example 6: Discovered Work Without Context
+
+**User submits**:
+```
+Title: Found a bug
+Description: Discovered while working on other stuff
+```
+
+**Detection**: Discovered work missing discovery context.
+
+**Enforcement dialogue**:
+```
+⚠️ DISCOVERED WORK: MISSING CONTEXT
+
+This appears to be discovered work but lacks crucial context:
+- [ ] What bug was found?
+- [ ] What were you working on when you found it?
+- [ ] How does it relate to the original work?
+
+Discovered work template:
+
+## Context
+Discovered while implementing [parent-issue-id]: [parent-title]
+
+## Problem
+Current: [What's broken]
+Expected: [What should happen]
+
+## Discovery Details
+- Found in: [file:line or component]
+- Related to: [how it connects to parent work]
+- Priority: [P0-P4 based on severity]
+
+Required dependency:
+--deps discovered-from:[parent-issue-id]
+
+This links the discovery chain for future reference.
+```
+
+### Enforcement Summary: The Why/What/How Test
+
+Before creating any issue, verify:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                 DESCRIPTION QUALITY TEST                │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  WHY (Context)                                          │
+│  └─ Why does this matter?                     [ ] PASS  │
+│  └─ What triggered this issue?                [ ] PASS  │
+│                                                         │
+│  WHAT (Problem)                                         │
+│  └─ What's the current state?                 [ ] PASS  │
+│  └─ What should the desired state be?         [ ] PASS  │
+│  └─ What's in/out of scope?                   [ ] PASS  │
+│                                                         │
+│  HOW (Verification)                                     │
+│  └─ How do we verify completion?              [ ] PASS  │
+│  └─ Are criteria specific and testable?       [ ] PASS  │
+│                                                         │
+│  STANDALONE TEST                                        │
+│  └─ Can someone work on this without          [ ] PASS  │
+│     asking clarifying questions?                        │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+All boxes must be checked before creating the issue.
+```
+
+### Minimum Length Guidelines
+
+| Issue Type | Minimum | Warning | Good |
+|------------|---------|---------|------|
+| chore | 30 chars | 50 chars | 100+ chars |
+| task | 50 chars | 100 chars | 150+ chars |
+| bug | 100 chars | 150 chars | 200+ chars |
+| feature | 100 chars | 200 chars | 300+ chars |
+| epic | 200 chars | 300 chars | 500+ chars |
+
 ## Summary
 
 **Core principle**: Good descriptions enable autonomous work.
