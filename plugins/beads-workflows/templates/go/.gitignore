@@ -4,8 +4,10 @@
 *.dll
 *.so
 *.dylib
-bin/
-dist/
+
+# Build output
+/bin/
+/dist/
 
 # Test binary
 *.test
@@ -13,47 +15,26 @@ dist/
 # Coverage
 coverage.out
 coverage.html
-*.coverprofile
 
-# Dependency directories
-vendor/
-
-# Go workspace
-go.work
-go.work.sum
+# Vendor (if not committed)
+# vendor/
 
 # IDE
 .idea/
 .vscode/
 *.swp
 *.swo
-*.sublime-workspace
-*.sublime-project
-
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Build cache (usually in GOCACHE, but sometimes local)
-.cache/
-
-# Debug files
-__debug_bin*
-
-# Air live reload
-tmp/
 
 # Environment
 .env
 .env.local
-.env.*.local
-*.pem
-*.key
 
-# Logs
-*.log
+# OS
+.DS_Store
+Thumbs.db
 
-# Temporary files
-*.tmp
-*.temp
+# Beads
+.beads/*.db
+.beads/*.db-journal
+.beads/*.db-wal
+.beads/*.db-shm

@@ -22,7 +22,8 @@
     "./commands/beads-session-start.md",
     "./commands/beads-session-end.md",
     "./commands/beads-issue-create.md",
-    "./commands/beads-dependency-add.md"
+    "./commands/beads-dependency-add.md",
+    "./commands/project-init.md"
   ],
   "agents": [
     "./agents/beads-disciplinarian.md",

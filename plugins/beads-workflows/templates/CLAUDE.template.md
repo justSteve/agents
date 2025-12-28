@@ -1,89 +1,118 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code when working with this project.
 
 ## Project Overview
 
-**{{PROJECT_NAME}}** - {{PROJECT_DESCRIPTION}}
+**Name**: {{project_name}}
+**Description**: {{description}}
+**Created**: {{created_date}}
 
-## Issue Tracking with Beads
+## Beads Issue Tracking
 
-This project uses **Beads** for AI-native issue tracking. Issues are stored in `.beads/` and sync with git.
+This project uses [beads](https://github.com/steveyegge/beads) for AI-native issue tracking.
 
-### Session Rituals
-
-**Starting a session:**
-```bash
-bd ready                              # Find available work
-bd show <id>                          # Review issue details
-bd update <id> --status=in_progress   # Claim the work
-```
-
-**Completing work:**
-```bash
-bd close <id>                         # Mark issue complete
-bd sync                               # Sync beads with remote
-git add . && git commit -m "..."      # Commit code changes
-git push                              # Push to remote
-```
-
-### Creating Issues
+### Quick Reference
 
 ```bash
-bd create --title="..." --type=task        # Create a task
-bd create --title="..." --type=bug         # Report a bug
-bd create --title="..." --type=feature     # New feature
-bd create --title="..." --type=epic        # Large initiative
-```
-
-### Dependencies
-
-```bash
-bd dep add <issue> <depends-on>       # Add dependency
-bd blocked                            # Show blocked issues
-bd dep tree <id>                      # View dependency tree
-```
-
-### Project Health
-
-```bash
-bd stats                              # Project statistics
-bd ready                              # Unblocked work
+# Find work
+bd ready                              # Show unblocked issues
 bd list --status=open                 # All open issues
+bd show <id>                          # View issue details
+
+# Work on issues
+bd update <id> --status=in_progress   # Claim an issue
+bd close <id>                         # Complete an issue
+
+# Create issues
+bd create --title="..." --type=task   # Create new issue
+bd dep add <issue> <depends-on>       # Add dependency
+
+# Sync
+bd sync                               # Sync with git remote
+```
+
+### Session Workflow
+
+**Start of session:**
+1. Run `bd ready` to find available work
+2. Review issue with `bd show <id>`
+3. Claim with `bd update <id> --status=in_progress`
+
+**End of session:**
+1. Run `git status` to check changes
+2. Commit your work
+3. Run `bd sync` to sync beads
+4. Run `git push` to push changes
+5. Close completed issues with `bd close <id>`
+
+### Issue Creation Guidelines
+
+When creating issues, include:
+- **Why**: Context and motivation
+- **What**: Specific problem or feature
+- **How**: Acceptance criteria (checkboxes)
+
+Example:
+```bash
+bd create --title="Add user authentication" --type=feature \
+  --description="## Context
+We need to secure the API endpoints.
+
+## Requirements
+- [ ] Implement JWT tokens
+- [ ] Add login endpoint
+- [ ] Add logout endpoint
+
+## Acceptance Criteria
+- Users can log in and receive a token
+- Protected endpoints reject invalid tokens"
 ```
 
 ## Agent Plugins
 
-This project uses the following Claude Code plugins:
+This project uses the following agent plugins:
+{{#agents}}
+- **{{name}}**: {{description}}
+{{/agents}}
 
-{{#AGENT_PLUGINS}}
-- **{{PLUGIN_NAME}}**: {{PLUGIN_DESCRIPTION}}
-{{/AGENT_PLUGINS}}
+## Project-Specific Rules
+
+{{#rules}}
+- {{.}}
+{{/rules}}
+{{^rules}}
+<!-- Add project-specific rules here -->
+{{/rules}}
+
+## Technology Stack
+
+{{#tech_stack}}
+- {{.}}
+{{/tech_stack}}
+{{^tech_stack}}
+<!-- Document your technology stack here -->
+{{/tech_stack}}
 
 ## Development Commands
 
-{{#DEV_COMMANDS}}
+{{#commands}}
+### {{name}}
 ```bash
-{{COMMAND}}  # {{DESCRIPTION}}
+{{command}}
 ```
-{{/DEV_COMMANDS}}
+{{description}}
 
-## Project Structure
+{{/commands}}
+{{^commands}}
+<!-- Document common development commands here -->
+{{/commands}}
 
-```
-{{PROJECT_SLUG}}/
-{{PROJECT_STRUCTURE}}
-```
+## Architecture Notes
 
-## Code Conventions
-
-{{#CODE_CONVENTIONS}}
-- {{CONVENTION}}
-{{/CODE_CONVENTIONS}}
-
-## Important Notes
-
-- Always check `bd ready` before starting work
-- Close issues immediately after completing work (don't batch)
-- Run `bd sync` at session end to push beads changes
-- All work should be tracked as beads issues
+{{#architecture}}
+{{.}}
+{{/architecture}}
+{{^architecture}}
+<!-- Add architecture notes as the project evolves -->
+{{/architecture}}

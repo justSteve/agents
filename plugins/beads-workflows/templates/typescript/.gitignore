@@ -1,12 +1,9 @@
 # Dependencies
 node_modules/
-.pnp
-.pnp.js
 
-# Build output
+# Build
 dist/
 build/
-out/
 *.tsbuildinfo
 
 # Testing
@@ -18,58 +15,24 @@ coverage/
 .vscode/
 *.swp
 *.swo
-*.sublime-workspace
-*.sublime-project
-
-# OS
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
 
 # Environment
 .env
 .env.local
 .env.*.local
-*.pem
-*.key
 
-# Cache
-.cache/
-.eslintcache
-.parcel-cache/
-.turbo/
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# Runtime
-*.pid
-*.seed
-*.pid.lock
+# OS
+.DS_Store
+Thumbs.db
 
-# Optional npm cache
-.npm/
-
-# Optional eslint cache
-.eslintcache
-
-# Yarn
-.yarn/cache
-.yarn/unplugged
-.yarn/build-state.yml
-.yarn/install-state.gz
-.pnp.*
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Temporary files
-tmp/
-temp/
-*.tmp
+# Beads
+.beads/*.db
+.beads/*.db-journal
+.beads/*.db-wal
+.beads/*.db-shm

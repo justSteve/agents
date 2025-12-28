@@ -1,76 +1,34 @@
 {
-  "$schema": "https://beads.dev/schemas/initial-issues.json",
-  "version": "1.0",
-  "description": "Go project setup issues",
-  "variables": {
-    "PROJECT_NAME": {
-      "description": "Human-readable project name",
-      "required": true
-    },
-    "PROJECT_SLUG": {
-      "description": "Binary/project name (lowercase, hyphens)",
-      "required": true
-    },
-    "MODULE_PATH": {
-      "description": "Go module path (e.g., github.com/user/repo)",
-      "required": true
-    }
+  "epic": {
+    "title": "Go Project Setup",
+    "description": "Initial Go project setup and configuration.",
+    "type": "epic",
+    "priority": 1
   },
-  "issues": [
+  "tasks": [
     {
-      "id": "setup-epic",
-      "title": "{{PROJECT_NAME}} Initial Setup",
-      "type": "epic",
-      "priority": 1,
-      "description": "Complete Go project setup with module, testing, and linting."
-    },
-    {
-      "id": "module-init",
       "title": "Initialize Go module",
+      "description": "## Context\nProject needs Go module configuration.\n\n## Tasks\n- [ ] Run go mod init\n- [ ] Create cmd/{{project_name}}/main.go\n- [ ] Verify build works\n\n## Acceptance Criteria\n- `go build ./...` succeeds",
       "type": "task",
-      "priority": 1,
-      "description": "Set up Go module:\n- Verify go.mod has correct module path\n- Run `go mod tidy`\n- Verify Go version >= 1.21\n- Test that `go build ./...` works",
-      "depends_on": ["setup-epic"]
+      "priority": 1
     },
     {
-      "id": "project-structure",
-      "title": "Create Go project structure",
+      "title": "Set up testing",
+      "description": "## Context\nProject needs automated testing.\n\n## Tasks\n- [ ] Create first _test.go file\n- [ ] Configure test coverage\n- [ ] Add table-driven tests\n\n## Acceptance Criteria\n- `go test ./...` runs and passes",
       "type": "task",
-      "priority": 1,
-      "description": "Create standard Go layout:\n- cmd/{{PROJECT_SLUG}}/main.go (entry point)\n- internal/ (private packages)\n- pkg/ (public packages, if needed)\n- Verify imports work correctly",
-      "depends_on": ["setup-epic"]
+      "priority": 1
     },
     {
-      "id": "testing-setup",
-      "title": "Configure Go testing",
-      "type": "task",
-      "priority": 1,
-      "description": "Set up testing:\n- Create first test file (*_test.go)\n- Run `go test ./...` and confirm it passes\n- Configure coverage: `go test -coverprofile=coverage.out ./...`\n- Add Makefile targets for testing",
-      "depends_on": ["module-init", "project-structure"]
-    },
-    {
-      "id": "linting-setup",
       "title": "Configure golangci-lint",
+      "description": "## Context\nLinting catches common issues.\n\n## Tasks\n- [ ] Create .golangci.yml\n- [ ] Configure linters\n- [ ] Fix any lint warnings\n\n## Acceptance Criteria\n- `golangci-lint run` passes",
       "type": "task",
-      "priority": 2,
-      "description": "Set up linting:\n- Install golangci-lint\n- Create .golangci.yml configuration\n- Run `golangci-lint run` and fix issues\n- Add lint target to Makefile",
-      "depends_on": ["module-init"]
+      "priority": 2
     },
     {
-      "id": "ci-pipeline",
-      "title": "Configure GitHub Actions CI",
+      "title": "Set up GitHub Actions CI",
+      "description": "## Context\nCI ensures code quality.\n\n## Tasks\n- [ ] Create .github/workflows/go.yml\n- [ ] Add build, test, lint steps\n- [ ] Configure Go version matrix\n\n## Acceptance Criteria\n- CI runs on push and PR\n- All checks pass",
       "type": "task",
-      "priority": 2,
-      "description": "Set up continuous integration:\n- Create .github/workflows/ci.yml\n- Run build, test, and lint on push/PR\n- Test on Go 1.21, 1.22\n- Add status badge to README",
-      "depends_on": ["testing-setup", "linting-setup"]
-    },
-    {
-      "id": "first-feature",
-      "title": "Implement first working feature",
-      "type": "task",
-      "priority": 1,
-      "description": "Build the first functional feature:\n- Implement core functionality in internal/ or pkg/\n- Wire up in cmd/{{PROJECT_SLUG}}/main.go\n- Write tests for the feature\n- Ensure build and tests pass",
-      "depends_on": ["testing-setup"]
+      "priority": 2
     }
   ]
 }

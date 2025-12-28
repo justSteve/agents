@@ -1,32 +1,24 @@
-# Beads workflow files (tracked separately)
-# Note: .beads/ is intentionally NOT ignored - it should be committed
+# Dependencies
+node_modules/
+vendor/
+.venv/
+venv/
+__pycache__/
+*.pyc
 
-# IDE and editor files
+# Build outputs
+dist/
+build/
+*.egg-info/
+target/
+
+# IDE and editors
 .idea/
 .vscode/
 *.swp
 *.swo
 *~
-.project
-.classpath
-.settings/
-
-# OS generated files
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-desktop.ini
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
 # Environment and secrets
 .env
@@ -34,49 +26,25 @@ yarn-error.log*
 .env.*.local
 *.pem
 *.key
-secrets/
-credentials/
+credentials.json
 
-# Build outputs (generic)
-build/
-dist/
-out/
-target/
-*.exe
-*.dll
-*.so
-*.dylib
+# Logs
+*.log
+logs/
 
-# Dependencies (generic)
-node_modules/
-vendor/
-.bundle/
-
-# Test and coverage
+# Testing
 coverage/
 .coverage
-*.cover
 htmlcov/
 .pytest_cache/
-.tox/
+.nyc_output/
 
-# Cache
-.cache/
-*.cache
-__pycache__/
-*.pyc
+# OS files
+Thumbs.db
+.DS_Store
 
-# Temporary files
-tmp/
-temp/
-*.tmp
-*.temp
-*.bak
-*.backup
-
-# Archives
-*.zip
-*.tar
-*.tar.gz
-*.rar
-*.7z
+# Beads database (SQLite is local-only, JSONL is synced)
+.beads/*.db
+.beads/*.db-journal
+.beads/*.db-wal
+.beads/*.db-shm

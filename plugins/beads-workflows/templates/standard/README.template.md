@@ -1,79 +1,55 @@
-# {{PROJECT_NAME}}
+# {{project_name}}
 
-{{PROJECT_DESCRIPTION}}
+{{description}}
 
-## Quick Start
+## Getting Started
 
 ```bash
 # Clone the repository
-git clone {{REPO_URL}}
-cd {{PROJECT_SLUG}}
+git clone {{repo_url}}
+cd {{project_name}}
 
-# Start working with beads
-bd ready          # See available work
-bd show <id>      # View issue details
+# View available work
+bd ready
 ```
+
+## Development
+
+This project uses [beads](https://github.com/steveyegge/beads) for issue tracking.
+
+### Common Commands
+
+```bash
+bd ready                    # Show issues ready to work on
+bd show <id>                # View issue details
+bd update <id> --status in_progress  # Claim an issue
+bd close <id>               # Complete an issue
+bd sync                     # Sync with remote
+```
+
+### Session Workflow
+
+1. **Start**: `bd ready` → pick an issue → `bd update <id> --status in_progress`
+2. **Work**: Make changes, commit regularly
+3. **End**: `bd close <id>` → `bd sync` → `git push`
 
 ## Project Structure
 
 ```
-{{PROJECT_SLUG}}/
-├── .beads/              # Issue tracking database
-├── .claude/
-│   └── CLAUDE.md        # Agent instructions
-├── src/                 # Source code
-├── tests/               # Test files
-├── docs/                # Documentation
-└── README.md
+{{project_name}}/
+├── .beads/           # Issue tracking database
+├── .claude/          # Claude Code configuration
+│   └── CLAUDE.md     # Project-specific instructions
+└── README.md         # This file
 ```
-
-## Development Workflow
-
-This project uses **Beads** for AI-native issue tracking. All work is tracked as beads issues.
-
-### Starting a Session
-
-```bash
-bd ready                              # Find available work
-bd show <id>                          # Review issue details
-bd update <id> --status=in_progress   # Claim the work
-```
-
-### Completing Work
-
-```bash
-bd close <id>                         # Mark issue complete
-bd sync                               # Sync with remote
-git add . && git commit -m "..."      # Commit code changes
-git push                              # Push to remote
-```
-
-### Creating Issues
-
-```bash
-bd create --title="..." --type=task   # Create a task
-bd create --title="..." --type=bug    # Report a bug
-bd create --title="..." --type=feature --priority=1  # High-priority feature
-```
-
-## Configuration
-
-### Agent Plugins
-
-This project is configured to use the following agent plugins:
-
-{{#AGENT_PLUGINS}}
-- `{{PLUGIN_NAME}}` - {{PLUGIN_DESCRIPTION}}
-{{/AGENT_PLUGINS}}
 
 ## Contributing
 
-1. Check `bd ready` for available work
-2. Claim an issue with `bd update <id> --status=in_progress`
-3. Make your changes
-4. Close the issue with `bd close <id>`
-5. Create a pull request
+1. Check `bd ready` for available issues
+2. Claim one issue at a time
+3. Follow the session workflow above
+4. Create new issues for discovered work: `bd create --title="..." --type=task`
 
 ## License
 
-{{LICENSE}}
+{{license}}

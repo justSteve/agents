@@ -1,72 +1,34 @@
 {
-  "$schema": "https://beads.dev/schemas/initial-issues.json",
-  "version": "1.0",
-  "description": "TypeScript project setup issues",
-  "variables": {
-    "PROJECT_NAME": {
-      "description": "Human-readable project name",
-      "required": true
-    },
-    "PROJECT_SLUG": {
-      "description": "npm package name (lowercase, hyphens)",
-      "required": true
-    }
+  "epic": {
+    "title": "TypeScript Project Setup",
+    "description": "Initial TypeScript project setup and configuration.",
+    "type": "epic",
+    "priority": 1
   },
-  "issues": [
+  "tasks": [
     {
-      "id": "setup-epic",
-      "title": "{{PROJECT_NAME}} Initial Setup",
-      "type": "epic",
-      "priority": 1,
-      "description": "Complete TypeScript project setup with npm, testing, and linting."
-    },
-    {
-      "id": "npm-init",
-      "title": "Initialize npm project",
+      "title": "Install dependencies",
+      "description": "## Context\nProject needs Node.js dependencies installed.\n\n## Tasks\n- [ ] Run npm install\n- [ ] Verify TypeScript compiles\n- [ ] Document Node version requirement\n\n## Acceptance Criteria\n- `npm run build` succeeds",
       "type": "task",
-      "priority": 1,
-      "description": "Set up npm project:\n- Run `npm install` to install dependencies\n- Verify Node.js version >= 18\n- Confirm package.json is correct\n- Test that `npm run build` works",
-      "depends_on": ["setup-epic"]
+      "priority": 1
     },
     {
-      "id": "project-structure",
-      "title": "Create TypeScript source structure",
+      "title": "Set up Jest testing",
+      "description": "## Context\nProject needs automated testing.\n\n## Tasks\n- [ ] Create src/__tests__/ directory\n- [ ] Configure ts-jest\n- [ ] Write first passing test\n- [ ] Add coverage reporting\n\n## Acceptance Criteria\n- `npm test` runs and passes",
       "type": "task",
-      "priority": 1,
-      "description": "Create standard TypeScript layout:\n- src/index.ts (main entry point)\n- src/lib/ (library code)\n- tests/ (test files)\n- Verify tsconfig.json paths are correct",
-      "depends_on": ["setup-epic"]
+      "priority": 1
     },
     {
-      "id": "vitest-setup",
-      "title": "Configure Vitest testing",
-      "type": "task",
-      "priority": 1,
-      "description": "Set up Vitest for testing:\n- Create vitest.config.ts if needed\n- Create first test in tests/index.test.ts\n- Run `npm test` and confirm it passes\n- Configure coverage reporting",
-      "depends_on": ["npm-init", "project-structure"]
-    },
-    {
-      "id": "eslint-setup",
       "title": "Configure ESLint and Prettier",
+      "description": "## Context\nConsistent code style improves readability.\n\n## Tasks\n- [ ] Create .eslintrc.js\n- [ ] Create .prettierrc\n- [ ] Add lint-staged for pre-commit\n\n## Acceptance Criteria\n- `npm run lint` passes\n- `npm run format` works",
       "type": "task",
-      "priority": 2,
-      "description": "Set up code quality tools:\n- Create .eslintrc.json with TypeScript rules\n- Create .prettierrc for formatting\n- Run `npm run lint` and fix any issues\n- Add editor config for consistency",
-      "depends_on": ["npm-init"]
+      "priority": 2
     },
     {
-      "id": "ci-pipeline",
       "title": "Configure GitHub Actions CI",
+      "description": "## Context\nCI ensures code quality on every push.\n\n## Tasks\n- [ ] Create .github/workflows/ci.yml\n- [ ] Add build, test, lint steps\n- [ ] Configure Node.js matrix\n\n## Acceptance Criteria\n- CI runs on push and PR\n- All checks pass",
       "type": "task",
-      "priority": 2,
-      "description": "Set up continuous integration:\n- Create .github/workflows/ci.yml\n- Run build, test, and lint on push/PR\n- Test on Node.js 18, 20, 22\n- Add status badge to README",
-      "depends_on": ["vitest-setup", "eslint-setup"]
-    },
-    {
-      "id": "first-feature",
-      "title": "Implement first working feature",
-      "type": "task",
-      "priority": 1,
-      "description": "Build the first functional feature:\n- Implement core functionality in src/\n- Export from src/index.ts\n- Write tests for the feature\n- Ensure build and tests pass",
-      "depends_on": ["vitest-setup"]
+      "priority": 2
     }
   ]
 }

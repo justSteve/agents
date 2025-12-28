@@ -1,72 +1,34 @@
 {
-  "$schema": "https://beads.dev/schemas/initial-issues.json",
-  "version": "1.0",
-  "description": "Standard project setup issues for beads-enabled projects",
-  "variables": {
-    "PROJECT_NAME": {
-      "description": "Human-readable project name",
-      "required": true
-    },
-    "PROJECT_SLUG": {
-      "description": "URL-safe project identifier (lowercase, hyphens)",
-      "required": true
-    }
+  "epic": {
+    "title": "Project Setup",
+    "description": "Initial project setup and configuration. Complete these tasks to establish the project foundation.",
+    "type": "epic",
+    "priority": 1
   },
-  "issues": [
+  "tasks": [
     {
-      "id": "setup-epic",
-      "title": "{{PROJECT_NAME}} Initial Setup",
-      "type": "epic",
-      "priority": 1,
-      "description": "Complete initial project setup including development environment, documentation, and first working feature."
-    },
-    {
-      "id": "dev-environment",
       "title": "Configure development environment",
+      "description": "## Context\nNew project needs development tooling configured.\n\n## Tasks\n- [ ] Set up linting/formatting\n- [ ] Configure editor settings\n- [ ] Add pre-commit hooks if needed\n\n## Acceptance Criteria\n- Development tools work consistently",
       "type": "task",
-      "priority": 1,
-      "description": "Set up the development environment:\n- Install required dependencies\n- Configure editor/IDE settings\n- Verify build/run commands work\n- Document any environment-specific setup steps",
-      "depends_on": ["setup-epic"]
+      "priority": 1
     },
     {
-      "id": "project-structure",
-      "title": "Establish project structure",
-      "type": "task",
-      "priority": 1,
-      "description": "Create the standard directory structure:\n- src/ for source code\n- tests/ for test files\n- docs/ for documentation\n- Add placeholder files where appropriate",
-      "depends_on": ["setup-epic"]
-    },
-    {
-      "id": "testing-framework",
       "title": "Set up testing framework",
+      "description": "## Context\nProject needs automated testing from the start.\n\n## Tasks\n- [ ] Choose and install test framework\n- [ ] Create test directory structure\n- [ ] Add example test\n- [ ] Configure test runner\n\n## Acceptance Criteria\n- Tests can be run with single command\n- Example test passes",
       "type": "task",
-      "priority": 2,
-      "description": "Configure the testing framework:\n- Install test runner and assertion library\n- Create first example test\n- Verify tests can be run from command line\n- Add test command to documentation",
-      "depends_on": ["dev-environment"]
+      "priority": 1
     },
     {
-      "id": "ci-pipeline",
       "title": "Configure CI/CD pipeline",
+      "description": "## Context\nAutomated builds and tests ensure code quality.\n\n## Tasks\n- [ ] Create GitHub Actions workflow (or equivalent)\n- [ ] Configure build step\n- [ ] Configure test step\n- [ ] Add status badge to README\n\n## Acceptance Criteria\n- CI runs on push to main\n- CI runs on pull requests\n- Build status visible in README",
       "type": "task",
-      "priority": 2,
-      "description": "Set up continuous integration:\n- Create GitHub Actions workflow (or equivalent)\n- Configure automated testing on push/PR\n- Add build status badge to README",
-      "depends_on": ["testing-framework"]
+      "priority": 2
     },
     {
-      "id": "documentation",
-      "title": "Create initial documentation",
+      "title": "Write initial documentation",
+      "description": "## Context\nDocumentation helps onboard contributors.\n\n## Tasks\n- [ ] Update README with project-specific details\n- [ ] Document setup instructions\n- [ ] Document contribution guidelines\n- [ ] Add architecture overview if complex\n\n## Acceptance Criteria\n- New contributor can set up project from README\n- Key decisions documented",
       "type": "task",
-      "priority": 2,
-      "description": "Write essential documentation:\n- Update README with project-specific details\n- Document installation/setup steps\n- Add usage examples\n- Include contribution guidelines",
-      "depends_on": ["project-structure"]
-    },
-    {
-      "id": "first-feature",
-      "title": "Implement first working feature",
-      "type": "task",
-      "priority": 1,
-      "description": "Build the first functional feature to validate the project setup:\n- Implement a minimal but complete feature\n- Write tests for the feature\n- Verify end-to-end functionality\n- This proves the project infrastructure works",
-      "depends_on": ["dev-environment", "testing-framework"]
+      "priority": 2
     }
   ]
 }
