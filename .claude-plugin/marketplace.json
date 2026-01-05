@@ -2170,8 +2170,7 @@
         "./skills/monorepo-management",
         "./skills/nx-workspace-patterns",
         "./skills/turborepo-caching",
-        "./skills/bazel-build-optimization",
-        "./skills/monorepo-dependency-management"
+        "./skills/bazel-build-optimization"
       ]
     }
   ]
