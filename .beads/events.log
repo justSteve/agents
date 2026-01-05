@@ -1,0 +1,33 @@
+2025-12-27T12:18:06Z|bd.issue.create|agents-ikb|unknown|1766837886|Implement remaining beads-workflows skills
+2025-12-27T12:18:06Z|bd.issue.create|agents-sob|unknown|1766837886|Implement remaining beads-workflows commands
+2025-12-27T12:18:06Z|bd.issue.create|agents-jar|unknown|1766837886|Implement beads-issue-reviewer agent
+2025-12-27T12:18:16Z|bd.issue.create|agents-d9t|unknown|1766837896|Phase 2: Database Extension for Agent Tracking
+2025-12-27T15:58:12Z|bd.issue.create|agents-8wn|unknown|1766851092|Phase 5: New Project Scaffolding
+2025-12-27T15:58:40Z|bd.issue.create|agents-5i7|unknown|1766851120|Implement project-init command
+2025-12-27T15:58:41Z|bd.issue.create|agents-bas|unknown|1766851121|Create standard project template
+2025-12-27T15:58:43Z|bd.issue.create|agents-msy|unknown|1766851123|Create Python project template
+2025-12-27T15:58:44Z|bd.issue.create|agents-gx0|unknown|1766851124|Create TypeScript project template
+2025-12-27T15:58:45Z|bd.issue.create|agents-sm0|unknown|1766851125|Create Go project template
+2025-12-27T15:58:47Z|bd.issue.create|agents-cbe|unknown|1766851127|Create CLAUDE.md template
+2025-12-27T15:58:48Z|bd.issue.create|agents-d9e|unknown|1766851128|Create initial-issues.json template
+2025-12-27T15:58:49Z|bd.issue.create|agents-dgg|unknown|1766851129|Test end-to-end new project workflow
+2025-12-28T02:25:30Z|bd.issue.create|agents-xvk|unknown|1766888730|Phase 4: Pattern Enforcement
+2025-12-28T02:25:39Z|bd.issue.create|agents-1a0|unknown|1766888739|Add beads workflow requirements to agent system prompts
+2025-12-28T02:25:48Z|bd.issue.create|agents-jt0|unknown|1766888748|Implement validation checkpoints in beads commands
+2025-12-28T02:25:57Z|bd.issue.create|agents-7mf|unknown|1766888757|Enhance skills with pattern enforcement examples
+2025-12-28T02:26:06Z|bd.issue.create|agents-08r|unknown|1766888766|Design soft validation warnings for beads CLI
+2025-12-28T02:26:16Z|bd.issue.create|agents-dmo|unknown|1766888776|Add quality validation to beads-issue-create command
+2025-12-28T02:26:25Z|bd.issue.create|agents-uw2|unknown|1766888785|Implement causal reasoning validation in beads-dependency-add
+2025-12-28T02:26:33Z|bd.issue.create|agents-zzb|unknown|1766888793|Add SessionEnd hook for session cleanup verification
+2025-12-28T02:26:41Z|bd.issue.create|agents-u93|unknown|1766888801|Test enforcement mechanisms with real workflows
+2025-12-28T15:16:10Z|bd.issue.create|agents-7yc|unknown|1766934970|Phase 3: Configuration Integration
+2025-12-28T15:16:28Z|bd.issue.create|agents-y8o|unknown|1766934988|Extend beads config.go for agents.* namespace
+2025-12-28T15:16:29Z|bd.issue.create|agents-x5f|unknown|1766934989|Implement bd agents subcommand
+2025-12-28T15:16:31Z|bd.issue.create|agents-ga0|unknown|1766934991|Add Viper support for user-level agent preferences
+2025-12-28T15:16:33Z|bd.issue.create|agents-w21|unknown|1766934993|Document agents.* config namespace
+2025-12-28T15:36:58Z|bd.issue.create|agents-3dt|unknown|1766936218|Phase 5: Project Scaffolding
+2025-12-28T15:37:21Z|bd.issue.create|agents-4k6|unknown|1766936241|Create project-init command
+2025-12-28T15:37:22Z|bd.issue.create|agents-ny8|unknown|1766936242|Create standard project template
+2025-12-28T15:37:24Z|bd.issue.create|agents-9xm|unknown|1766936244|Create language-specific templates
+2025-12-28T15:37:26Z|bd.issue.create|agents-e3s|unknown|1766936246|Create CLAUDE.md template generator
+2025-12-28T16:03:11Z|bd.issue.create|agents-lrl|unknown|1766937791|Add brownfield support to project-init command
